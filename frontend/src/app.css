@@ -1152,3 +1152,10 @@ body.science.dark .edge-msg.active .edge-flow {
     gap: 6px;
     flex-wrap: wrap;
 }
+.md li.sub {
+    margin-left: 18px;
+    list-style: circle;
+}
+.contract .docs-grid {
+    columns: 2 420px;
+}

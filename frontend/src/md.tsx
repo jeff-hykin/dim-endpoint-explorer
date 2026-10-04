@@ -68,12 +68,13 @@ export function Markdown({ text, className = "" }: { text?: string; className?: 
             const ordered = /^\s*\d+\./.test(line)
             const items: ReactNode[] = []
             while (i < lines.length && /^\s*([-*]|\d+\.)\s/.test(lines[i])) {
+                const indent = lines[i].match(/^\s*/)![0].length
                 let item = lines[i].replace(/^\s*([-*]|\d+\.)\s+/, "")
                 i++
                 while (i < lines.length && /^\s{2,}\S/.test(lines[i]) && !/^\s*([-*]|\d+\.)\s/.test(lines[i])) {
                     item += " " + lines[i++].trim()
                 }
-                items.push(<li key={i}>{inline(item, i)}</li>)
+                items.push(<li key={i} className={indent >= 2 ? "sub" : undefined}>{inline(item, i)}</li>)
             }
             blocks.push(ordered ? <ol key={i}>{items}</ol> : <ul key={i}>{items}</ul>)
         } else if (/^\s*\|/.test(line)) {
