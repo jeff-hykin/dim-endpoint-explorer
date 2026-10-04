@@ -221,7 +221,7 @@ export function AgentSection({ focus }: { focus?: string }) {
                     <div className="intro">
                         <p>
                             The agent gateway (dimcode) is a separate server; Desktop proxies <code>/agent/…</code>{" "}
-                            to it, so <code>/agent/api/sessions</code> here is <code>/api/sessions</code>{" "}
+                            to it, so <code>/agent/api/settings</code> here is <code>/api/settings</code>{" "}
                             there. It owns chat sessions, the model and keys, and the portal page; for anything on the
                             robot it goes back through Desktop's MCP.
                         </p>
