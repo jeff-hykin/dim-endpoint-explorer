@@ -1175,3 +1175,8 @@ body.science.dark .edge-msg.active .edge-flow {
 .contract .docs-grid {
     columns: 2 420px;
 }
+/* a wide table scrolls inside its card instead of widening the page (phones) */
+.teach-grid > .dim-card {
+    min-width: 0;
+    overflow-x: auto;
+}
