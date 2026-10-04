@@ -135,6 +135,7 @@ await write("openapi.json", {
 await write("agent_openapi.json", {
     openapi: "3.1.0",
     info: { title: "dimcode gateway", version: "0.3.0" },
+    servers: [{ url: "/agent" }],
     tags: [
         { name: "Sessions", description: "Agent chat sessions: one per conversation, streamed to the portal." },
         { name: "Settings", description: "Model choice and API keys." },
@@ -248,7 +249,7 @@ await write("stats.json", {
             row("GET", "/api/nope", 3, 0, 3, false),
         ],
         dimos: [row("GET", "/dimos/runs", 120, 0.2), row("GET", "/dimos/blueprints/{name}/config", 4, 0)],
-        agent: [row("GET", "/agent/api/sessions", 30, 0.1), row("GET", "/agent/api/sessions/abc", 5, 0, 0, false)],
+        agent: [row("GET", "/api/sessions", 30, 0.1), row("GET", "/api/sessions/abc", 5, 0, 0, false)],
         "app:dim-rerun": [
             row("GET", "api/state", 900, 2.5),
             row("POST", "api/open", 3, 0, 2),

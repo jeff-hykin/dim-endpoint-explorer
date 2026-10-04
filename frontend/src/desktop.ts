@@ -123,15 +123,20 @@ export type Counts = {
     tracked: boolean
 }
 
+/** a path as the stats key it: no leading slash, and the gateway's own path for the agent family (it counts `/api/x`, not `/agent/api/x`) */
+const norm = (family: string, path: string) => {
+    const bare = trim(path.split("?")[0])
+    return family === "agent" ? bare.replace(/^agent(\/|$)/, "") : bare
+}
+
 /** one endpoint's live counts: the stats rows for its template, plus unmatched raw paths that fit it */
 export function countsFor(stats: Stats | null, family: string, method: string, path: string): Counts {
     const rows = stats?.families?.[family] ?? []
-    let mine = rows.filter((row) => row.method === method && trim(row.path) === trim(path))
+    const want = norm(family, path)
+    let mine = rows.filter((row) => row.method === method && norm(family, row.path) === want)
     if (!mine.length) {
-        const bare = path.replace(/^\/agent/, "")
         mine = rows.filter((row) =>
-            row.method === method && row.matched === false &&
-            (matchesTemplate(path, row.path) || matchesTemplate(bare, row.path.replace(/^\/agent/, "")))
+            row.method === method && row.matched === false && matchesTemplate(want, norm(family, row.path))
         )
     }
     const calls = mine.reduce((sum, row) => sum + row.calls, 0)

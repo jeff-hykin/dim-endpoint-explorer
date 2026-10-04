@@ -128,17 +128,22 @@ export function familyEndpoints(
     return families
 }
 
-/** a family's stats rows that belong to one endpoint: the exact template, else a raw path that fits it */
+/** a path as the stats key it: no leading slash, and the gateway's own path for the agent family (it counts `/api/x`, not `/agent/api/x`) */
+const norm = (family: string, path: string) => {
+    const bare = trim(path.split("?")[0])
+    return family === "agent" ? bare.replace(/^agent(\/|$)/, "") : bare
+}
+
+/** a family's stats rows that belong to one endpoint: the exact template, else unmatched raw paths that fit it */
 export function statsFor(stats: Stats | null, family: string, method: string, path: string): EndpointStat[] {
     const rows = stats?.families?.[family] ?? []
-    const exact = rows.filter((row) => row.method === method && trim(row.path) === trim(path))
+    const want = norm(family, path)
+    const exact = rows.filter((row) => row.method === method && norm(family, row.path) === want)
     if (exact.length) {
         return exact
     }
-    const bare = family === "agent" ? path.replace(/^\/agent/, "") : path
     return rows.filter((row) =>
-        row.method === method && row.matched === false &&
-        (matchesTemplate(path, row.path) || matchesTemplate(bare, row.path.replace(/^\/agent/, "")))
+        row.method === method && row.matched === false && matchesTemplate(want, norm(family, row.path))
     )
 }
 

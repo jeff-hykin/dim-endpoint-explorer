@@ -74,7 +74,7 @@
         "agent": [
             {
                 "method": "GET",
-                "path": "/agent/api/sessions",
+                "path": "/api/sessions",
                 "calls": 30,
                 "errors": 0,
                 "lastCall": 1791115198500,
@@ -84,7 +84,7 @@
             },
             {
                 "method": "GET",
-                "path": "/agent/api/sessions/abc",
+                "path": "/api/sessions/abc",
                 "calls": 5,
                 "errors": 0,
                 "lastCall": 1791115198500,

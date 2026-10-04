@@ -188,7 +188,11 @@ export function mockDesktop(
                 : path.startsWith("/agent")
                 ? "agent"
                 : "desktop"
-            const counted = app ? (app[2].startsWith("api/") ? app[2] : "(frontend)") : path
+            const counted = app
+                ? (app[2].startsWith("api/") ? app[2] : "(frontend)")
+                : family === "agent"
+                ? path.slice(6) || "/"
+                : path
             count(family, app && !app[2].startsWith("api/") ? "GET" : request.method, counted, response.status)
         }
         return response
