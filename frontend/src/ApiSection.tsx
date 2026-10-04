@@ -24,7 +24,9 @@ export function ApiSection({ doc, error, family, docFamily, prefix = "", source,
     const now = useNow()
     const ops = useMemo(() => operations(doc, docFamily), [doc, docFamily])
     const tags = useMemo(() => {
-        const known = (doc?.tags ?? []).filter((tag) => ops.some((op) => op.tag === tag.name))
+        const known = (doc?.tags ?? []).filter((tag) =>
+            ops.some((op) => op.tag === tag.name) || !docFamily || tag["x-family"] === docFamily
+        )
         const extra = [...new Set(ops.map((op) => op.tag))].filter((name) => !known.some((tag) => tag.name === name))
         return [...known, ...extra.map((name) => ({ name, description: undefined as string | undefined }))]
     }, [doc, ops])
@@ -120,6 +122,14 @@ export function ApiSection({ doc, error, family, docFamily, prefix = "", source,
                                     <Method method={method} />
                                     <span className="ep-path">{url(path)}</span>
                                     <span className="ep-summary">{op.summary}</span>
+                                    {op["x-agent"] && (
+                                        <span
+                                            className="dim-badge"
+                                            title="the agent finds this through search_endpoints"
+                                        >
+                                            agent
+                                        </span>
+                                    )}
                                     {op["x-mcp-tool"] && (
                                         <span className="dim-badge info" title="also an MCP tool">
                                             mcp: {op["x-mcp-tool"]}

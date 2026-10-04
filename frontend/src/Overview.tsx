@@ -253,7 +253,7 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
                         box={blueprint}
                         kind="zenoh"
                         title={launch?.blueprint ?? "no blueprint"}
-                        sub={launch ? `phase: ${launch.phase}` : "start one in the Launcher"}
+                        sub={launch ? `phase: ${launch.phase}` : "none running"}
                         status={running ? "ok" : launch ? "warn" : "off"}
                         onClick={() => go("dimos")}
                     />

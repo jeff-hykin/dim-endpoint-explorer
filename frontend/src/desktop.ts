@@ -33,6 +33,7 @@ export type Operation = {
     responses?: Record<string, { description?: string }>
     "x-family"?: string
     "x-mcp-tool"?: string
+    "x-agent"?: boolean
 }
 export type OpenApi = {
     openapi: string

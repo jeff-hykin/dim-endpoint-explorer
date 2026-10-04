@@ -21,11 +21,11 @@ for (const scheme of ["dark", "light"] as const) {
         await page.goto(`${base}#${section}`)
         await page.waitForTimeout(section === "zenoh" ? 3500 : 2500)
         if (section === "zenoh") {
-            await page.locator("table.topics tbody tr").nth(1).click().catch(() => {})
+            await page.locator("table.topics tbody tr").nth(1).click({ timeout: 1500 }).catch(() => {})
             await page.waitForTimeout(2000)
         }
         if (section === "desktop" || section === "dimos" || section === "agent") {
-            await page.locator(".ep-row").first().click().catch(() => {})
+            await page.locator(".ep-row").first().click({ timeout: 1500 }).catch(() => {})
             await page.waitForTimeout(400)
         }
         const file = `${out}/${prefix}${section}_${scheme === "dark" ? "portal" : "research"}.png`
