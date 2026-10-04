@@ -1,0 +1,19 @@
+{
+    "apps": [
+        {
+            "name": "dim-rerun",
+            "title": "Rerun",
+            "running": true
+        },
+        {
+            "name": "controller",
+            "title": "Controller",
+            "running": true
+        },
+        {
+            "name": "dim-endpoint-explorer",
+            "title": "Endpoint Explorer",
+            "running": true
+        }
+    ]
+}

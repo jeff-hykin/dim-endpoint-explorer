@@ -1,0 +1,64 @@
+{
+    "/odom": {
+        "topic": "/odom",
+        "type": "nav_msgs.Odometry",
+        "key": "dimos/odom/nav_msgs.Odometry",
+        "bytes": 720,
+        "note": "no decoder for this type here; an app may show it"
+    },
+    "/color_image": {
+        "topic": "/color_image",
+        "type": "sensor_msgs.Image",
+        "key": "dimos/color_image/sensor_msgs.Image",
+        "bytes": 921664,
+        "width": 640,
+        "height": 480,
+        "encoding": "rgb8",
+        "frameId": "camera",
+        "image": {
+            "mimeType": "image/png",
+            "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        }
+    },
+    "/lidar": {
+        "topic": "/lidar",
+        "type": "sensor_msgs.PointCloud2",
+        "key": "dimos/lidar/sensor_msgs.PointCloud2",
+        "bytes": 210000,
+        "cloud": {
+            "count": 13000,
+            "min": [
+                -8.2,
+                -6.1,
+                -0.3
+            ],
+            "max": [
+                9.4,
+                7.7,
+                2.1
+            ],
+            "centroid": [
+                0.4,
+                0.2,
+                0.6
+            ],
+            "sample": [
+                [
+                    1.2,
+                    0.3,
+                    0.1
+                ],
+                [
+                    2.5,
+                    -1.1,
+                    0.4
+                ],
+                [
+                    -3,
+                    2.2,
+                    1
+                ]
+            ]
+        }
+    }
+}

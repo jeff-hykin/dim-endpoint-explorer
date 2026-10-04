@@ -1,0 +1,141 @@
+{
+    "since": 1791114600000,
+    "now": 1791115200000,
+    "totals": {
+        "calls": 1890,
+        "errors": 6,
+        "perSec": 3.9
+    },
+    "families": {
+        "desktop": [
+            {
+                "method": "GET",
+                "path": "/api/topics/rates",
+                "calls": 600,
+                "errors": 0,
+                "lastCall": 1791115198500,
+                "meanMs": 3.2,
+                "perSec": 1,
+                "matched": true
+            },
+            {
+                "method": "GET",
+                "path": "/api/apps",
+                "calls": 40,
+                "errors": 0,
+                "lastCall": 1791115198500,
+                "meanMs": 3.2,
+                "perSec": 0.1,
+                "matched": true
+            },
+            {
+                "method": "POST",
+                "path": "/mcp",
+                "calls": 12,
+                "errors": 1,
+                "lastCall": 1791115198500,
+                "meanMs": 3.2,
+                "perSec": 0,
+                "matched": true
+            },
+            {
+                "method": "GET",
+                "path": "/api/nope",
+                "calls": 3,
+                "errors": 3,
+                "lastCall": 1791115198500,
+                "meanMs": 3.2,
+                "perSec": 0,
+                "matched": false
+            }
+        ],
+        "dimos": [
+            {
+                "method": "GET",
+                "path": "/dimos/runs",
+                "calls": 120,
+                "errors": 0,
+                "lastCall": 1791115198500,
+                "meanMs": 3.2,
+                "perSec": 0.2,
+                "matched": true
+            },
+            {
+                "method": "GET",
+                "path": "/dimos/blueprints/{name}/config",
+                "calls": 4,
+                "errors": 0,
+                "lastCall": 1791115198500,
+                "meanMs": 3.2,
+                "perSec": 0,
+                "matched": true
+            }
+        ],
+        "agent": [
+            {
+                "method": "GET",
+                "path": "/agent/api/sessions",
+                "calls": 30,
+                "errors": 0,
+                "lastCall": 1791115198500,
+                "meanMs": 3.2,
+                "perSec": 0.1,
+                "matched": true
+            },
+            {
+                "method": "GET",
+                "path": "/agent/api/sessions/abc",
+                "calls": 5,
+                "errors": 0,
+                "lastCall": 1791115198500,
+                "meanMs": 3.2,
+                "perSec": 0,
+                "matched": false
+            }
+        ],
+        "app:dim-rerun": [
+            {
+                "method": "GET",
+                "path": "api/state",
+                "calls": 900,
+                "errors": 0,
+                "lastCall": 1791115198500,
+                "meanMs": 3.2,
+                "perSec": 2.5,
+                "matched": true
+            },
+            {
+                "method": "POST",
+                "path": "api/open",
+                "calls": 3,
+                "errors": 2,
+                "lastCall": 1791115198500,
+                "meanMs": 3.2,
+                "perSec": 0,
+                "matched": true
+            },
+            {
+                "method": "GET",
+                "path": "(frontend)",
+                "calls": 22,
+                "errors": 0,
+                "lastCall": 1791115198500,
+                "meanMs": 3.2,
+                "perSec": 0,
+                "matched": true
+            }
+        ],
+        "app:controller": [
+            {
+                "method": "POST",
+                "path": "api/move",
+                "calls": 250,
+                "errors": 0,
+                "lastCall": 1791115198500,
+                "meanMs": 3.2,
+                "perSec": 0,
+                "matched": true
+            }
+        ]
+    }
+}

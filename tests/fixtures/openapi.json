@@ -1,0 +1,593 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "dimOS Desktop",
+        "version": "0.9.0"
+    },
+    "servers": [
+        {
+            "url": "/"
+        }
+    ],
+    "tags": [
+        {
+            "name": "Apps",
+            "description": "Install, update, start and stop apps. Each app is a git repo with a `dimos.yaml`; Desktop builds it with nix (`dimosApp`) and serves it under `/apps/<name>/`.",
+            "x-family": "desktop"
+        },
+        {
+            "name": "Notifications",
+            "description": "The notification center. Apps post with `POST /api/notifications` (the dim-app SDK's `notify()`); every page hears `{type:\"notification\"}` on the events stream.",
+            "x-family": "desktop"
+        },
+        {
+            "name": "UI settings",
+            "description": "Desktop-wide settings shared by every page: theme, OS notifications, network access (read-only here).",
+            "x-family": "desktop"
+        },
+        {
+            "name": "Topics (zenoh-web)",
+            "description": "Live robot topics: the list, publish rates and one sampled message, read from zenoh through zenoh-web.",
+            "x-family": "desktop"
+        },
+        {
+            "name": "Events",
+            "description": "`GET /api/events` is one Server-Sent Events stream for every page: apps, endpoints, blueprints, runs, notification, ui-settings, endpoint-stats.",
+            "x-family": "desktop"
+        },
+        {
+            "name": "Endpoints",
+            "description": "The endpoint registry (Desktop's own + every app's manifest) and per-endpoint call counts.",
+            "x-family": "desktop"
+        },
+        {
+            "name": "MCP",
+            "description": "`POST /mcp`: the Model Context Protocol server the agent uses. Its tools search and call the endpoints in the registry.",
+            "x-family": "desktop"
+        },
+        {
+            "name": "Blueprints",
+            "description": "**Enumeration.** The dimos server lists every blueprint the checkout can run.\n\n**File watching.** A `notify` watcher on the checkout's blueprint sources and the venv's packages, debounced, sends `{type:\"blueprints\", added, removed}`.",
+            "x-family": "dimos"
+        },
+        {
+            "name": "Runs",
+            "description": "Launch and stop blueprints. A launch goes through phases: `starting` → `running` → `stopped` or `failed`.",
+            "x-family": "dimos"
+        },
+        {
+            "name": "Logs",
+            "description": "A run's structured log records, paged by offset and filtered by level or text.",
+            "x-family": "dimos"
+        },
+        {
+            "name": "Config",
+            "description": "Config introspection: `introspect.py` runs in the checkout's python and reads each module's configurable args.",
+            "x-family": "dimos"
+        }
+    ],
+    "paths": {
+        "/api/apps": {
+            "get": {
+                "operationId": "get__api_apps",
+                "summary": "Installed apps and whether each is running",
+                "description": "Installed apps and whether each is running.",
+                "tags": [
+                    "Apps"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            },
+            "post": {
+                "operationId": "post__api_apps",
+                "summary": "Install an app from a git URL",
+                "description": "Install an app from a git URL.",
+                "tags": [
+                    "Apps"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            }
+        },
+        "/api/open-app": {
+            "post": {
+                "operationId": "post__api_open_app",
+                "summary": "Open an app's window",
+                "description": "Open an app's window.",
+                "tags": [
+                    "Apps"
+                ],
+                "parameters": [
+                    {
+                        "name": "app",
+                        "in": "query",
+                        "required": true,
+                        "description": "app name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            }
+        },
+        "/api/notifications": {
+            "get": {
+                "operationId": "get__api_notifications",
+                "summary": "Recent notifications",
+                "description": "Recent notifications.",
+                "tags": [
+                    "Notifications"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            },
+            "post": {
+                "operationId": "post__api_notifications",
+                "summary": "Post a notification",
+                "description": "Post a notification.",
+                "tags": [
+                    "Notifications"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop",
+                "x-mcp-tool": "notify"
+            }
+        },
+        "/api/ui-settings": {
+            "get": {
+                "operationId": "get__api_ui_settings",
+                "summary": "The shared UI settings",
+                "description": "The shared UI settings.",
+                "tags": [
+                    "UI settings"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            },
+            "put": {
+                "operationId": "put__api_ui_settings",
+                "summary": "Change UI settings",
+                "description": "Change UI settings.",
+                "tags": [
+                    "UI settings"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            }
+        },
+        "/api/hud": {
+            "get": {
+                "operationId": "get__api_hud",
+                "summary": "What the HUD shows",
+                "description": "What the HUD shows.",
+                "tags": [
+                    "UI settings"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            }
+        },
+        "/api/topics": {
+            "get": {
+                "operationId": "get__api_topics",
+                "summary": "Every topic zenoh-web sees: topic, type, key",
+                "description": "Every topic zenoh-web sees: topic, type, key.",
+                "tags": [
+                    "Topics (zenoh-web)"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            }
+        },
+        "/api/topics/rates": {
+            "get": {
+                "operationId": "get__api_topics_rates",
+                "summary": "Per-topic Hz, bytes/s and a short history",
+                "description": "Per-topic Hz, bytes/s and a short history.",
+                "tags": [
+                    "Topics (zenoh-web)"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            }
+        },
+        "/api/topics/sample": {
+            "get": {
+                "operationId": "get__api_topics_sample",
+                "summary": "The next message on a topic",
+                "description": "The next message on a topic.",
+                "tags": [
+                    "Topics (zenoh-web)"
+                ],
+                "parameters": [
+                    {
+                        "name": "topic",
+                        "in": "query",
+                        "required": true,
+                        "description": "e.g. /odom",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            }
+        },
+        "/api/events": {
+            "get": {
+                "operationId": "get__api_events",
+                "summary": "The Server-Sent Events stream",
+                "description": "The Server-Sent Events stream.",
+                "tags": [
+                    "Events"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            }
+        },
+        "/api/search": {
+            "get": {
+                "operationId": "get__api_search",
+                "summary": "Search apps, endpoints and settings",
+                "description": "Search apps, endpoints and settings.",
+                "tags": [
+                    "Apps"
+                ],
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": true,
+                        "description": "text",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            }
+        },
+        "/api/endpoints": {
+            "get": {
+                "operationId": "get__api_endpoints",
+                "summary": "The endpoint registry",
+                "description": "The endpoint registry.",
+                "tags": [
+                    "Endpoints"
+                ],
+                "parameters": [
+                    {
+                        "name": "app",
+                        "in": "query",
+                        "required": false,
+                        "description": "only this app",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            }
+        },
+        "/api/endpoints/stats": {
+            "get": {
+                "operationId": "get__api_endpoints_stats",
+                "summary": "Per-endpoint call counts",
+                "description": "Per-endpoint call counts.",
+                "tags": [
+                    "Endpoints"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            }
+        },
+        "/api/desktop/openapi": {
+            "get": {
+                "operationId": "get__api_desktop_openapi",
+                "summary": "This document",
+                "description": "This document.",
+                "tags": [
+                    "Endpoints"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            }
+        },
+        "/api/desktop/dimos.yaml": {
+            "get": {
+                "operationId": "get__api_desktop_dimos_yaml",
+                "summary": "Desktop's own manifest",
+                "description": "Desktop's own manifest.",
+                "tags": [
+                    "Endpoints"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            }
+        },
+        "/mcp": {
+            "post": {
+                "operationId": "post__mcp",
+                "summary": "MCP JSON-RPC (tools/list, tools/call)",
+                "description": "MCP JSON-RPC (tools/list, tools/call).",
+                "tags": [
+                    "MCP"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "desktop"
+            }
+        },
+        "/dimos/info": {
+            "get": {
+                "operationId": "get__dimos_info",
+                "summary": "The dimos checkout: dir, version, installed",
+                "description": "The dimos checkout: dir, version, installed.",
+                "tags": [
+                    "Blueprints"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "dimos"
+            }
+        },
+        "/dimos/blueprints": {
+            "get": {
+                "operationId": "get__dimos_blueprints",
+                "summary": "Every blueprint dimos can run",
+                "description": "Every blueprint dimos can run.",
+                "tags": [
+                    "Blueprints"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "dimos"
+            }
+        },
+        "/dimos/blueprints/{name}": {
+            "get": {
+                "operationId": "get__dimos_blueprints_name_",
+                "summary": "A blueprint's modules and streams",
+                "description": "A blueprint's modules and streams.",
+                "tags": [
+                    "Blueprints"
+                ],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "description": "blueprint name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "dimos"
+            }
+        },
+        "/dimos/blueprints/{name}/config": {
+            "get": {
+                "operationId": "get__dimos_blueprints_name_config",
+                "summary": "A blueprint's configurable args per module",
+                "description": "A blueprint's configurable args per module.",
+                "tags": [
+                    "Config"
+                ],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "description": "blueprint name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "dimos"
+            }
+        },
+        "/dimos/global-config": {
+            "get": {
+                "operationId": "get__dimos_global_config",
+                "summary": "GlobalConfig schema, defaults and overrides",
+                "description": "GlobalConfig schema, defaults and overrides.",
+                "tags": [
+                    "Config"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "dimos"
+            }
+        },
+        "/dimos/runs": {
+            "get": {
+                "operationId": "get__dimos_runs",
+                "summary": "Running blueprints and Desktop's launch",
+                "description": "Running blueprints and Desktop's launch.",
+                "tags": [
+                    "Runs"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "dimos"
+            },
+            "post": {
+                "operationId": "post__dimos_runs",
+                "summary": "Launch a blueprint",
+                "description": "Launch a blueprint.",
+                "tags": [
+                    "Runs"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "dimos"
+            }
+        },
+        "/dimos/runs/stop": {
+            "post": {
+                "operationId": "post__dimos_runs_stop",
+                "summary": "Stop the launched blueprint",
+                "description": "Stop the launched blueprint.",
+                "tags": [
+                    "Runs"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "dimos"
+            }
+        },
+        "/dimos/runs/{runId}/log": {
+            "get": {
+                "operationId": "get__dimos_runs_runId_log",
+                "summary": "A run's log records",
+                "description": "A run's log records.",
+                "tags": [
+                    "Logs"
+                ],
+                "parameters": [
+                    {
+                        "name": "runId",
+                        "in": "path",
+                        "required": true,
+                        "description": "run id or latest",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JSON"
+                    }
+                },
+                "x-family": "dimos"
+            }
+        }
+    }
+}

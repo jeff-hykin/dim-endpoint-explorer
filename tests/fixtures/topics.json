@@ -1,0 +1,19 @@
+{
+    "topics": [
+        {
+            "topic": "/odom",
+            "type": "nav_msgs.Odometry",
+            "key": "dimos/odom"
+        },
+        {
+            "topic": "/color_image",
+            "type": "sensor_msgs.Image",
+            "key": "dimos/color_image"
+        },
+        {
+            "topic": "/lidar",
+            "type": "sensor_msgs.PointCloud2",
+            "key": "dimos/lidar"
+        }
+    ]
+}

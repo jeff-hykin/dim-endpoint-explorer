@@ -1,0 +1,7 @@
+title: dimOS Desktop
+agent:
+    description: Desktop's own API
+    endpoints:
+        - method: GET
+          path: /api/apps
+          description: Installed apps

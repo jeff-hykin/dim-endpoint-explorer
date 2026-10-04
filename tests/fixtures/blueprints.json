@@ -1,0 +1,16 @@
+{
+    "blueprints": [
+        {
+            "name": "unitree-go2",
+            "kind": "builtin"
+        },
+        {
+            "name": "unitree-go2-basic",
+            "kind": "builtin"
+        },
+        {
+            "name": "my-bot",
+            "kind": "external"
+        }
+    ]
+}

@@ -1,0 +1,21 @@
+{
+    "runs": [
+        {
+            "runId": "20261004-120000-unitree-go2",
+            "pid": 4242,
+            "blueprint": "unitree-go2",
+            "startedAt": "2026-10-04T12:00:00Z",
+            "logDir": "/tmp/runs/x"
+        }
+    ],
+    "launch": {
+        "blueprint": "unitree-go2",
+        "phase": "running",
+        "startedAt": "2026-10-04T12:00:00Z",
+        "pid": 4242,
+        "output": "",
+        "runId": "20261004-120000-unitree-go2",
+        "logDir": null,
+        "error": null
+    }
+}

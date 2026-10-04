@@ -1,0 +1,65 @@
+{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+        "tools": [
+            {
+                "name": "list_endpoints",
+                "description": "Every endpoint in the registry",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "app": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "search_endpoints",
+                "description": "Search endpoints by text",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "query"
+                    ]
+                }
+            },
+            {
+                "name": "call_endpoint",
+                "description": "Call one endpoint",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "app": {
+                            "type": "string"
+                        },
+                        "method": {
+                            "type": "string"
+                        },
+                        "path": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "notify",
+                "description": "Post a notification",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}

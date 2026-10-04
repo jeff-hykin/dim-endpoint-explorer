@@ -1,0 +1,243 @@
+{
+    "apps": [
+        {
+            "app": "desktop",
+            "title": "Desktop",
+            "description": "dimOS Desktop's own API",
+            "source": "builtin",
+            "endpoints": [
+                {
+                    "method": "GET",
+                    "path": "/api/apps",
+                    "description": "Installed apps and whether each is running"
+                },
+                {
+                    "method": "POST",
+                    "path": "/api/apps",
+                    "description": "Install an app from a git URL"
+                },
+                {
+                    "method": "POST",
+                    "path": "/api/open-app",
+                    "description": "Open an app's window"
+                },
+                {
+                    "method": "GET",
+                    "path": "/api/notifications",
+                    "description": "Recent notifications"
+                },
+                {
+                    "method": "POST",
+                    "path": "/api/notifications",
+                    "description": "Post a notification"
+                },
+                {
+                    "method": "GET",
+                    "path": "/api/ui-settings",
+                    "description": "The shared UI settings"
+                },
+                {
+                    "method": "PUT",
+                    "path": "/api/ui-settings",
+                    "description": "Change UI settings"
+                },
+                {
+                    "method": "GET",
+                    "path": "/api/hud",
+                    "description": "What the HUD shows"
+                },
+                {
+                    "method": "GET",
+                    "path": "/api/topics",
+                    "description": "Every topic zenoh-web sees: topic, type, key"
+                },
+                {
+                    "method": "GET",
+                    "path": "/api/topics/rates",
+                    "description": "Per-topic Hz, bytes/s and a short history"
+                },
+                {
+                    "method": "GET",
+                    "path": "/api/topics/sample",
+                    "description": "The next message on a topic"
+                },
+                {
+                    "method": "GET",
+                    "path": "/api/events",
+                    "description": "The Server-Sent Events stream"
+                },
+                {
+                    "method": "GET",
+                    "path": "/api/search",
+                    "description": "Search apps, endpoints and settings"
+                },
+                {
+                    "method": "GET",
+                    "path": "/api/endpoints",
+                    "description": "The endpoint registry"
+                },
+                {
+                    "method": "GET",
+                    "path": "/api/endpoints/stats",
+                    "description": "Per-endpoint call counts"
+                },
+                {
+                    "method": "GET",
+                    "path": "/api/desktop/openapi",
+                    "description": "This document"
+                },
+                {
+                    "method": "GET",
+                    "path": "/api/desktop/dimos.yaml",
+                    "description": "Desktop's own manifest"
+                },
+                {
+                    "method": "POST",
+                    "path": "/mcp",
+                    "description": "MCP JSON-RPC (tools/list, tools/call)"
+                },
+                {
+                    "method": "GET",
+                    "path": "/dimos/info",
+                    "description": "The dimos checkout: dir, version, installed"
+                },
+                {
+                    "method": "GET",
+                    "path": "/dimos/blueprints",
+                    "description": "Every blueprint dimos can run"
+                },
+                {
+                    "method": "GET",
+                    "path": "/dimos/blueprints/{name}",
+                    "description": "A blueprint's modules and streams"
+                },
+                {
+                    "method": "GET",
+                    "path": "/dimos/blueprints/{name}/config",
+                    "description": "A blueprint's configurable args per module"
+                },
+                {
+                    "method": "GET",
+                    "path": "/dimos/global-config",
+                    "description": "GlobalConfig schema, defaults and overrides"
+                },
+                {
+                    "method": "GET",
+                    "path": "/dimos/runs",
+                    "description": "Running blueprints and Desktop's launch"
+                },
+                {
+                    "method": "POST",
+                    "path": "/dimos/runs",
+                    "description": "Launch a blueprint"
+                },
+                {
+                    "method": "POST",
+                    "path": "/dimos/runs/stop",
+                    "description": "Stop the launched blueprint"
+                },
+                {
+                    "method": "GET",
+                    "path": "/dimos/runs/{runId}/log",
+                    "description": "A run's log records"
+                }
+            ]
+        },
+        {
+            "app": "dim-rerun",
+            "title": "Rerun",
+            "description": "Shows a Rerun web viewer inside Desktop",
+            "source": "dimos.yaml",
+            "manifestUrl": "/apps/dim-rerun/agent.json",
+            "endpoints": [
+                {
+                    "method": "GET",
+                    "path": "api/state",
+                    "description": "Rerun's state",
+                    "role": "context"
+                },
+                {
+                    "method": "POST",
+                    "path": "api/viewer",
+                    "description": "Connect to a viewer",
+                    "params": {
+                        "host": {
+                            "type": "string",
+                            "description": "viewer host"
+                        }
+                    }
+                },
+                {
+                    "method": "POST",
+                    "path": "api/open",
+                    "description": "Show a stream or recording"
+                },
+                {
+                    "method": "GET",
+                    "path": "api/recording/{name}",
+                    "description": "The open .rrd's bytes",
+                    "params": {
+                        "name": {
+                            "type": "string",
+                            "required": true,
+                            "description": "file name"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "app": "controller",
+            "title": "Controller",
+            "description": "Drive the robot",
+            "source": "agent.json",
+            "endpoints": [
+                {
+                    "method": "GET",
+                    "path": "api/state",
+                    "description": "Controller state"
+                },
+                {
+                    "method": "POST",
+                    "path": "api/move",
+                    "description": "Send a velocity",
+                    "params": {
+                        "x": {
+                            "type": "number"
+                        },
+                        "yaw": {
+                            "type": "number"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "app": "dim-endpoint-explorer",
+            "title": "Endpoint Explorer",
+            "source": "dimos.yaml",
+            "endpoints": [
+                {
+                    "method": "GET",
+                    "path": "api/summary",
+                    "description": "System summary"
+                },
+                {
+                    "method": "GET",
+                    "path": "api/endpoints",
+                    "description": "Endpoints by family",
+                    "params": {
+                        "family": {
+                            "type": "string"
+                        }
+                    }
+                },
+                {
+                    "method": "GET",
+                    "path": "api/stats",
+                    "description": "Call counts"
+                }
+            ]
+        }
+    ]
+}
