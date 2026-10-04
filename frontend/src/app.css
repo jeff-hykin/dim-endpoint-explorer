@@ -79,6 +79,12 @@ code {
     letter-spacing: 0.02em;
     white-space: nowrap;
 }
+/* Portal's Michroma: "uppercase, wide tracking, small sizes only" */
+body.science.dark .brand-name {
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
 .tabs {
     display: flex;
     gap: 2px;
@@ -174,14 +180,16 @@ code {
     flex-wrap: wrap;
 }
 body.science.dark .section-title {
-    font-size: 20px;
-    letter-spacing: 0.03em;
+    font-size: 13px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
 }
 .section-hint {
     font-family: var(--sans);
     font-size: 13px;
     color: var(--muted-fg);
     letter-spacing: 0;
+    text-transform: none;
 }
 .intro {
     max-width: 900px;
@@ -426,12 +434,13 @@ body.science.dark .edge-msg.active .edge-flow {
 /* ── teaching cards ── */
 .teach-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
     gap: 12px;
     margin-bottom: 14px;
 }
 .teach-grid.two {
-    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    grid-template-columns:
+        repeat(auto-fit, minmax(min(420px, 100%), 1fr)); /* min(): one column on a phone, not wider than it */
 }
 .dim-card {
     padding: 14px 16px;
