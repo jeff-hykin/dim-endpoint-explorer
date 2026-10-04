@@ -8,7 +8,7 @@ body {
 body.science {
     font-size: 14px;
     min-height: 100vh;
-    --zen: #7c4ddb; /* zenoh traffic: its own hue next to the one blue accent */
+    --zen: var(--cyan); /* zenoh traffic: the palette's data blue, next to the one accent */
 }
 body.science.dark {
     --zen: var(--violet);
@@ -311,10 +311,10 @@ body.science.dark .section-title {
     fill: var(--primary-soft);
 }
 .node.zenoh rect {
-    stroke: color-mix(in srgb, var(--zen) 55%, var(--border));
+    stroke: color-mix(in srgb, var(--zen) 55%, transparent);
 }
 .node.app rect {
-    stroke: color-mix(in srgb, var(--primary) 35%, var(--border));
+    stroke: color-mix(in srgb, var(--primary) 35%, transparent);
 }
 .node-title {
     font-size: 13px;
@@ -680,9 +680,17 @@ body.science.dark .edge-msg.active .edge-flow {
     text-align: left;
     cursor: pointer;
 }
-.ep-row:hover,
-.ep.open .ep-row {
+/* a hovered / open endpoint is one rounded block (the doc's search-result row: radius 8 on paper, square in the Portal) */
+.ep-row:hover {
     background: var(--accent);
+    border-radius: var(--radius);
+}
+.ep.open {
+    background: var(--accent);
+    border-radius: var(--radius);
+}
+.ep.open .ep-row {
+    background: transparent;
 }
 .method {
     font-family: var(--mono);
@@ -747,7 +755,6 @@ body.science.dark .edge-msg.active .edge-flow {
     flex-direction: column;
     gap: 10px;
     padding: 4px 14px 14px 74px;
-    background: var(--accent);
 }
 .ep-doc > p {
     margin: 0;
@@ -1055,7 +1062,7 @@ body.science.dark .edge-msg.active .edge-flow {
     stroke: var(--border);
 }
 .dnode.zenoh rect {
-    stroke: color-mix(in srgb, var(--zen) 60%, var(--border));
+    stroke: color-mix(in srgb, var(--zen) 60%, transparent);
 }
 .lifeline {
     stroke: var(--border);
@@ -1130,7 +1137,7 @@ body.science.dark .edge-msg.active .edge-flow {
     .api,
     .apps-grid,
     .zenoh-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr); /* not 1fr: a long endpoint row would widen the page past the phone */
     }
     .api-nav,
     .apps-nav {
