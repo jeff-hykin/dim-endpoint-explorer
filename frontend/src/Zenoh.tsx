@@ -153,9 +153,8 @@ export function ZenohSection() {
                             are the same code.
                         </li>
                         <li>
-                            <b>App backends</b> get <code>--zenoh-web-url</code> and <code>--zenoh-connect</code> (and
-                            {" "}
-                            <code>ZENOH_WEB_URL</code>, <code>ZENOH_CONNECT</code>) to reach the same data.
+                            <b>App backends</b> get <code>zenohWebUrl</code> and <code>zenohConnect</code> in the{" "}
+                            <code>DIMOS_APP</code> env var to reach the same data.
                         </li>
                     </ul>
                 </Doc>

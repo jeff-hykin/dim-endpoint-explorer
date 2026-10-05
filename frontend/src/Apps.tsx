@@ -358,7 +358,7 @@ onDesktopEvent("*", (event) => log(event)) // everything`}
                     </pre>
                     <p className="small">
                         A backend uses the same call: in Deno it reads the stream from the Desktop URL its server was
-                        given (<code>--desktop-url</code>). For its <em>own</em>{" "}
+                        given (<code>desktopUrl</code> in <code>DIMOS_APP</code>). For its <em>own</em>{" "}
                         pages, an app backend has a second channel: the SDK's websocket (<code>dim-app/ws</code>,{" "}
                         <code>dimApp.send()</code>).
                     </p>

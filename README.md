@@ -30,7 +30,7 @@ re-read every 4 s; topic rates are polled every second.
 | `GET api/endpoints` | `family=desktop\|dimos\|agent\|app:<name>` (+ `q`): endpoints with live counts            |
 | `GET api/stats`     | Desktop's call counts, top endpoints per family (`family`, `top`)                         |
 
-They are built from Desktop's APIs at `--desktop-url` (else `DIMOS_DESKTOP_URL`).
+They are built from Desktop's APIs at `DIMOS_APP`'s `desktopUrl` (older Desktops: `--desktop-url`).
 
 ## Development
 

@@ -1,23 +1,11 @@
-// Desktop's own HTTP API, read by the backend: the URL comes from Desktop's `--desktop-url` flag (docs/apps.md), else
-// DIMOS_DESKTOP_URL (what dim-app's dimContext() reads), else Desktop's default port.
+// Desktop's own HTTP API, read by the backend: the URL is DIMOS_APP's `desktopUrl` (docs/apps.md; older Desktops:
+// --desktop-url / DIMOS_DESKTOP_URL), else Desktop's default port.
 import { HttpError } from "./http.ts"
+import { dimosApp } from "./dimos_app.ts"
 
 const TIMEOUT_MS = 4000
 
-function flag(name: string): string | undefined {
-    const index = Deno.args.indexOf(`--${name}`)
-    return index === -1 ? undefined : Deno.args[index + 1]
-}
-
-function env(name: string): string | undefined {
-    try {
-        return Deno.env.get(name)
-    } catch {
-        return undefined
-    }
-}
-
-let base = (flag("desktop-url") ?? env("DIMOS_DESKTOP_URL") ?? "http://127.0.0.1:7077").replace(/\/+$/, "")
+let base = (dimosApp.desktopUrl ?? "http://127.0.0.1:7077").replace(/\/+$/, "")
 
 export function desktopUrl(): string {
     return base
