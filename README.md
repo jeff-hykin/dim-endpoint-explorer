@@ -10,14 +10,14 @@ dimos-desktop install https://github.com/jeff-hykin/dim-endpoint-explorer
 
 ## Sections
 
-| section       | reads                                                                     | shows                                                                    |
-| ------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Overview      | `/api/endpoints/stats`, `/api/topics/rates`, `/api/events`, `/dimos/runs` | an animated data-flow map, each link carrying live calls/s or messages/s |
-| zenoh-web     | `/api/topics`, `/api/topics/rates`, `/api/topics/sample`                  | topics with Hz, bandwidth, sparklines, a sampled payload; zenoh docs     |
-| Desktop       | `/api/desktop/openapi`, `/api/desktop/dimos.yaml`                         | Desktop's API by group, per-endpoint docs and counts, Try it for GETs    |
-| dimos server  | `/api/desktop/openapi` (dimos family), `/dimos/runs`, `/dimos/blueprints` | the same, plus the running blueprint, its phase and the blueprint count  |
-| Agent gateway | `/agent/api/openapi`, `POST /mcp` `tools/list`                            | the gateway's API and the MCP tools the agent calls                      |
-| Apps          | `/api/endpoints` (re-read on `endpoints` / `apps` events)                 | every app's endpoints, counts, errors, last call; the events contract    |
+| section       | reads                                                                                | shows                                                                    |
+| ------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| Overview      | `/api/endpoints/stats`, `/api/topics/rates`, Desktop's events (zenoh), `/dimos/runs` | an animated data-flow map, each link carrying live calls/s or messages/s |
+| zenoh-web     | `/api/topics`, `/api/topics/rates`, `/api/topics/sample`                             | topics with Hz, bandwidth, sparklines, a sampled payload; zenoh docs     |
+| Desktop       | `/api/desktop/openapi`, `/api/desktop/dimos.yaml`                                    | Desktop's API by group, per-endpoint docs and counts, Try it for GETs    |
+| dimos server  | `/api/desktop/openapi` (dimos family), `/dimos/runs`, `/dimos/blueprints`            | the same, plus the running blueprint, its phase and the blueprint count  |
+| Agent gateway | `/agent/api/openapi`, `POST /mcp` `tools/list`                                       | the gateway's API and the MCP tools the agent calls                      |
+| Apps          | `/api/endpoints` (re-read on `endpoints` / `apps` events)                            | every app's endpoints, counts, errors, last call; the events contract    |
 
 The page reads Desktop directly (same origin). Counts update from Desktop's `{type:"endpoint-stats"}` events and a
 re-read every 4 s; topic rates are polled every second.

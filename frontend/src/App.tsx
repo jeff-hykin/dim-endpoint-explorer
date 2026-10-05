@@ -88,7 +88,7 @@ export function App() {
                 <div className="top-right">
                     <span
                         className={`conn ${connected ? "on" : "off"}`}
-                        title={live.statsError ?? "reading /api/endpoints/stats + /api/events"}
+                        title={live.statsError ?? "reading /api/endpoints/stats + endpoint-stats events (zenoh)"}
                     >
                         <span className="dot" />
                         {connected ? "live" : live.statsError ? "no stats" : "connecting"}

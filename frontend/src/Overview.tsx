@@ -202,8 +202,8 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
                     <Node
                         box={events}
                         kind="port"
-                        title="Events (SSE)"
-                        sub="/api/events"
+                        title="Events (zenoh)"
+                        sub="<ns>/desktop/events"
                         metric={formatRate(live.eventsPerSec, " ev/s")}
                         onClick={() => go("apps", "events")}
                     />
@@ -338,11 +338,12 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
                 <div className="dim-card teach">
                     <h3>2 · Changes come down</h3>
                     <p>
-                        Nobody polls for "did something change?". Desktop pushes one Server-Sent Events stream,{" "}
-                        <code>/api/events</code>, to every page: <code>apps</code>, <code>endpoints</code>,{" "}
-                        <code>runs</code>, <code>blueprints</code>,{" "}
-                        <code>endpoint-stats</code>… This page listens with the SDK's{" "}
-                        <code>onDesktopEvent</code>, which is how these numbers move.
+                        Nobody polls for "did something change?". Desktop publishes its events on zenoh,{" "}
+                        <code>{"<ns>/desktop/events/<type>"}</code>, and every page hears them over its one zenoh-web
+                        connection: <code>apps</code>, <code>endpoints</code>, <code>runs</code>,{" "}
+                        <code>blueprints</code>, <code>endpoint-stats</code>… This page listens with the SDK's{" "}
+                        <code>onDesktopEvent</code>, which is how these numbers move. Apps' backends push to their pages
+                        the same way, through <code>{"POST /desktop/frontend/<app>/<topic>"}</code>.
                     </p>
                     <button type="button" className="dim-btn sm" onClick={() => go("apps", "events")}>
                         The events contract →
@@ -426,7 +427,7 @@ function Activity({ go }: { go: (section: Section, focus?: string) => void }) {
                             <span className="dim-muted ev-detail">{describeEvent(event)}</span>
                         </li>
                     ))}
-                    {!events.length && <li className="dim-muted">Waiting for /api/events…</li>}
+                    {!events.length && <li className="dim-muted">Waiting for Desktop's events (zenoh)…</li>}
                 </ul>
             </div>
         </div>

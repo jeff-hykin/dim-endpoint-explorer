@@ -1,8 +1,10 @@
-// The page's live view of the system, shared by every section: call counts (GET /api/endpoints/stats, then the
-// `endpoint-stats` events, re-read every few seconds so idle rates fall to 0), topic rates (GET /api/topics/rates every
-// second, which also keeps Desktop's counting subscriber alive), and every Desktop event seen (onDesktopEvent).
+// The page's live view of the system, shared by every section: call counts (GET /api/endpoints/stats, then Desktop's
+// `endpoint-stats` events on zenoh, which also carry rates decaying to 0; re-read after the zenoh-web connection comes
+// back), topic rates (GET /api/topics/rates every second: Desktop has no event for them, and the reads keep its counting
+// subscriber alive), and every Desktop event seen (onDesktopEvent: `<ns>/desktop/events/**` on the page's one zenoh-web
+// connection).
 import { useEffect, useState, useSyncExternalStore } from "react"
-import { onDesktopEvent } from "./dim-app/desktop_events.js"
+import { onDesktopEvent, onDesktopReconnect } from "./dim-app/desktop_events.js"
 import { getJson, type Rates, type Stats } from "./desktop.ts"
 
 const HISTORY = 60
@@ -116,7 +118,7 @@ export function startLive() {
     readRates()
     const visible = () => document.visibilityState !== "hidden"
     setInterval(() => visible() && readRates(), 1000)
-    setInterval(() => visible() && readStats(), 4000)
+    onDesktopReconnect(readStats) // events sent while the link was down are gone
     setInterval(sample, 1000)
     onDesktopEvent("*", (event: { type?: string }) => {
         eventsThisSecond++
@@ -161,6 +163,7 @@ export function useJson<T>(path: string | null, refreshOn: string[] = [], init?:
                 setLoads((n) => n + 1)
             })
         )
+        offs.push(onDesktopReconnect(() => setLoads((n) => n + 1)))
         return () => offs.forEach((off: () => void) => off())
     }, [refreshOn.join(",")])
     return { data, error, reload: () => setLoads((n) => n + 1), refreshedBy }

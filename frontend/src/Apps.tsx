@@ -316,7 +316,7 @@ function EventsContract() {
                         {[
                             [10, "app backend", "manifest changes"],
                             [170, "Desktop registry", "re-reads manifests"],
-                            [330, "GET /api/events", "one SSE stream"],
+                            [330, "zenoh-web", "<ns>/desktop/events/*"],
                             [490, "your page", "onDesktopEvent()"],
                         ].map(([x, title, sub]) => (
                             <g key={String(title)} className="dnode">
@@ -334,33 +334,44 @@ function EventsContract() {
                             <path markerEnd="url(#arrow)" className="dline event" d="M240,116 L400,116" />
                             <text x={320} y={110} textAnchor="middle">{`{type:"endpoints", app, added, removed}`}</text>
                             <path markerEnd="url(#arrow)" className="dline event" d="M400,150 L560,150" />
-                            <text x={480} y={144} textAnchor="middle">data: {"{…}"}</text>
+                            <text x={480} y={144} textAnchor="middle">WebRTC sample {"{…}"}</text>
                             <path markerEnd="url(#arrow)" className="dline" d="M560,186 L400,186" />
                             <text x={480} y={180} textAnchor="middle">GET /api/endpoints again</text>
                         </g>
                     </svg>
                     <p>
-                        Desktop never calls into a page. It keeps <b>one</b> Server-Sent Events stream,{" "}
-                        <code>GET /api/events</code>, and writes one JSON object per <code>data:</code> line, typed by
-                        {" "}
-                        <code>type</code>. A page subscribes with the dim-app SDK, which shares one connection per page
-                        and reconnects with backoff (0.5 s doubling to 10 s):
+                        The rule: a page <b>asks</b> over HTTP and <b>hears</b>{" "}
+                        over zenoh. Desktop publishes each event on <code>{"<ns>/desktop/events/<type>"}</code>{" "}
+                        (JSON, typed by <code>type</code>; the dimos server's on{" "}
+                        <code>{"<ns>/dimos/events/<type>"}</code>), and the page hears it through Desktop's zenoh-web
+                        bridge on its <b>one</b> zenoh-web connection (dim-app's{" "}
+                        <code>getZenoh()</code>; the namespace comes from{" "}
+                        <code>GET /api/desktop/zenoh</code>). Snapshot + live: GET first, apply the events, GET again
+                        when the connection comes back. No SSE, no websockets, no polling:
                     </p>
                     <pre className="code-block">
-                        {`import { onDesktopEvent } from "dim-app/desktop_events.js"
+                        {`import { onDesktopEvent, onDesktopReconnect } from "dim-app/desktop_events.js"
 
 const off = onDesktopEvent("endpoints", (event) => {
     // event.app, event.added, event.removed
     reloadEndpoints()          // this section does exactly this
 })
 onDesktopEvent("apps", reloadEndpoints)   // installed, removed, started…
-onDesktopEvent("*", (event) => log(event)) // everything`}
+onDesktopEvent("*", (event) => log(event)) // everything
+onDesktopReconnect(reloadEndpoints)       // events sent while the link was down are gone`}
                     </pre>
                     <p className="small">
-                        A backend uses the same call: in Deno it reads the stream from the Desktop URL its server was
-                        given (<code>desktopUrl</code> in <code>DIMOS_APP</code>). For its <em>own</em>{" "}
-                        pages, an app backend has a second channel: the SDK's websocket (<code>dim-app/ws</code>,{" "}
-                        <code>dimApp.send()</code>).
+                        An app's <em>own</em>{" "}
+                        backend pushes to its pages the same way: one HTTP call to Desktop's relay,{" "}
+                        <code>{"POST /desktop/frontend/<app>/<topic>"}</code> (any language; dim-app's{" "}
+                        <code>publishFrontend(topic, payload)</code>), which publishes the body on{" "}
+                        <code>{"<ns>/apps/<app>/frontend/<topic>"}</code>; a Rust or Python backend with zenoh may
+                        publish there itself (<code>zenohPrefix</code> in{" "}
+                        <code>DIMOS_APP</code>). The page subscribes with{" "}
+                        <code>getZenoh().subscribeFrontend(topic, cb)</code>, or for state the agent can change,{" "}
+                        <code>useBackendState(key)</code>: it GETs, and re-GETs when the backend's{" "}
+                        <code>stateChanged(key)</code> publishes <code>{"{key, version}"}</code> on{" "}
+                        <code>state/&lt;key&gt;</code>.
                     </p>
                 </Doc>
                 <Doc title="The standard events" open>
