@@ -165,7 +165,8 @@ body.science.dark .brand-name {
     font-size: 13px;
 }
 .content {
-    padding: 18px 20px 60px;
+    /* the end of the page scrolls above Desktop's dock */
+    padding: 18px 20px calc(60px + var(--dim-inset-bottom));
     max-width: 1480px;
     margin: 0 auto;
 }
@@ -1179,4 +1180,13 @@ body.science.dark .edge-msg.active .edge-flow {
 .teach-grid > .dim-card {
     min-width: 0;
     overflow-x: auto;
+}
+
+/* first-run messages: a card at the top of the section, not over the content */
+.onboard {
+    margin: 0 0 16px;
+}
+.onboard .dim-empty {
+    margin: 0;
+    width: min(640px, 100%);
 }

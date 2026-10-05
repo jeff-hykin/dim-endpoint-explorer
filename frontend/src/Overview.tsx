@@ -5,6 +5,7 @@ import { curve, FlowEdge } from "./flow.tsx"
 import { useJson, useLive } from "./live.ts"
 import type { Section } from "./App.tsx"
 import { Live, Sparkline } from "./ui.tsx"
+import { EmptyState } from "./dim-app/react.js"
 
 type Box = { x: number; y: number; w: number; h: number }
 const mid = (x1: number, y1: number, x2: number, y2: number): [number, number] => [(x1 + x2) / 2, (y1 + y2) / 2]
@@ -75,8 +76,22 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
         mid: mid(from[0], from[1], to[0], to[1]),
     })
 
+    // nothing running: say what's still here and where to start one (live: Desktop's runs event re-reads /dimos/runs)
+    const nothingRunning = runs.data && !runs.data.runs?.length &&
+        !(launch && (launch.phase === "running" || launch.phase === "starting"))
     return (
         <div className="overview">
+            {nothingRunning && (
+                <div className="onboard">
+                    <EmptyState
+                        testId="onboard-no-blueprint"
+                        label="No blueprint running"
+                        title="Nothing is running, so only Desktop's own endpoints are here"
+                        body="Launch a blueprint (or a replay, no robot needed) to see its modules' endpoints and topics light up too."
+                        actions={[{ label: "Open the Launcher", app: "launcher", params: { kind: "blueprint" } }]}
+                    />
+                </div>
+            )}
             <div className="totals">
                 <div className="total">
                     <span className="dim-label">calls / s</span>

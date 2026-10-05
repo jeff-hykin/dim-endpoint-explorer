@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react"
 import { formatBytes, getJson } from "./desktop.ts"
 import { useJson, useLive } from "./live.ts"
+import { EmptyState } from "./dim-app/react.js"
 import { Arrow, Doc, Live, Notice, Sparkline } from "./ui.tsx"
 
 type Sample = {
@@ -82,7 +83,27 @@ export function ZenohSection() {
             </div>
             {ratesError && <Notice kind="warn">/api/topics/rates: {ratesError}</Notice>}
             {rates && !rates.up && (
-                <Notice kind="warn">The zenoh bridge isn't up (Settings → zenoh-web), so there are no topics.</Notice>
+                <div className="onboard">
+                    <EmptyState
+                        testId="onboard-link-lost"
+                        label="zenoh-web down"
+                        tone="warn"
+                        title="Desktop's zenoh-web bridge isn't up, so there are no topics"
+                        body="It's what brings robot topics to browser pages. Turn it on or check it in Settings → zenoh-web."
+                        actions={[{ label: "Open Settings", app: "settings" }]}
+                    />
+                </div>
+            )}
+            {rates?.up && !list.length && (
+                <div className="onboard">
+                    <EmptyState
+                        testId="onboard-no-topics"
+                        label="No topics"
+                        title="No topic is publishing"
+                        body="Start a blueprint (or a replay, no robot needed) and its topics appear here with live rates."
+                        actions={[{ label: "Open the Launcher", app: "launcher", params: { kind: "blueprint" } }]}
+                    />
+                </div>
             )}
             <div className="zenoh-grid">
                 <div className="dim-card topics-card">
