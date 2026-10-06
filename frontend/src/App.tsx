@@ -7,7 +7,6 @@ import { familyRate, formatRate } from "./desktop.ts"
 import { startLive, useLive } from "./live.ts"
 import { Overview } from "./Overview.tsx"
 import { AgentSection, DesktopSection, DimosSection } from "./Sections.tsx"
-import { ThemeToggle } from "./ThemeToggle.tsx"
 import { ZenohSection } from "./Zenoh.tsx"
 
 export type Section = "overview" | "zenoh" | "desktop" | "dimos" | "agent" | "apps"
@@ -93,7 +92,6 @@ export function App() {
                         <span className="dot" />
                         {connected ? "live" : live.statsError ? "no stats" : "connecting"}
                     </span>
-                    <ThemeToggle />
                 </div>
             </header>
             {live.statsError && (
