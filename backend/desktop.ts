@@ -1,5 +1,5 @@
-// Desktop's own HTTP API, read by the backend: the URL is DIMOS_APP's `desktopUrl` (docs/apps.md; older Desktops:
-// --desktop-url / DIMOS_DESKTOP_URL), else Desktop's default port.
+// Desktop's own HTTP API, read by the backend: the URL is DIMOS_APP's `desktopUrl` (docs/apps.md), else Desktop's
+// default port.
 import { HttpError } from "./http.ts"
 import { dimosApp } from "./dimos_app.ts"
 
