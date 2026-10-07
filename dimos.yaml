@@ -1,9 +1,22 @@
 title: Endpoint Explorer
 spec-version: v1.0 # the dimos.yaml spec version this file follows
+# what it reads to draw the map: each gateway's description of itself, the endpoint registry and call counts, topics
+uses:
+    "@dimos-gateway": [GET /runs, GET /blueprints]
+    "@desktop-gateway":
+        - GET /api/endpoints
+        - GET /api/endpoints/stats
+        - GET /api/desktop/openapi
+        - GET /api/desktop/dimos.yaml
+        - GET /api/topics
+        - GET /api/topics/sample
+        - GET /api/topics/rates
+        - GET /api/zenoh-web
+    "@agentic-gateway": [GET /api/openapi]
 caches:
     - url: "https://dimos-desktop.cachix.org"
       key: "dimos-desktop.cachix.org-1:A4P35aGJGmCan92LWyamtSFXMqaVE+VRFYnrJ8QMTeQ="
-agent:
+provides:
     description: >-
         Endpoint Explorer: maps every endpoint family of the running dimOS system (Desktop, the dimos server, the agent
         gateway, each app, zenoh-web topics) with live call counts and topic rates
