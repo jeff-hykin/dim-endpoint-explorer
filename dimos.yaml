@@ -1,5 +1,5 @@
 title: Endpoint Explorer
-dimos-desktop-api: ">=2 <3"
+spec-version: v1.0 # the dimos.yaml spec version this file follows
 caches:
     - url: "https://dimos-desktop.cachix.org"
       key: "dimos-desktop.cachix.org-1:A4P35aGJGmCan92LWyamtSFXMqaVE+VRFYnrJ8QMTeQ="
