@@ -64,10 +64,13 @@ export function App() {
     return (
         <div className="shell">
             <header className="top">
-                <div className="brand">
-                    <span className="brand-mark" />
-                    <span className="brand-name">Endpoint Explorer</span>
-                </div>
+                {/* inside Desktop, its window bar already shows the app's icon and name */}
+                {window.parent === window && (
+                    <div className="brand">
+                        <span className="brand-mark" />
+                        <span className="brand-name">Endpoint Explorer</span>
+                    </div>
+                )}
                 <nav className="tabs" role="tablist">
                     {SECTIONS.map((s) => (
                         <button
