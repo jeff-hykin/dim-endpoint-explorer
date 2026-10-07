@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react"
 import { formatBytes, getJson } from "./desktop.ts"
 import { useJson, useLive } from "./live.ts"
-import { EmptyState } from "./dim-app/react.js"
+import { EmptyState } from "./dim-app/source/react.js"
 import { Arrow, Doc, Live, Notice, Sparkline } from "./ui.tsx"
 
 type Sample = {

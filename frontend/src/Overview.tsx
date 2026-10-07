@@ -5,7 +5,7 @@ import { curve, FlowEdge } from "./flow.tsx"
 import { useJson, useLive } from "./live.ts"
 import type { Section } from "./App.tsx"
 import { Live, Sparkline } from "./ui.tsx"
-import { EmptyState } from "./dim-app/react.js"
+import { EmptyState } from "./dim-app/source/react.js"
 
 type Box = { x: number; y: number; w: number; h: number }
 const mid = (x1: number, y1: number, x2: number, y2: number): [number, number] => [(x1 + x2) / 2, (y1 + y2) / 2]

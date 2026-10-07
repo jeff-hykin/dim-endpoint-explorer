@@ -4,7 +4,7 @@
 // subscriber alive), and every Desktop event seen (onDesktopEvent: `<ns>/desktop/events/**` on the page's one zenoh-gateway
 // connection).
 import { useEffect, useState, useSyncExternalStore } from "react"
-import { onDesktopEvent, onDesktopReconnect } from "./dim-app/desktop_events.js"
+import { onDesktopEvent, onDesktopReconnect } from "./dim-app/source/desktop_events.js"
 import { getJson, type Rates, type Stats } from "./desktop.ts"
 
 const HISTORY = 60

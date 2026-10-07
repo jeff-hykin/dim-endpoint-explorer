@@ -350,7 +350,7 @@ function EventsContract() {
                         when the connection comes back. No SSE, no websockets, no polling:
                     </p>
                     <pre className="code-block">
-                        {`import { onDesktopEvent, onDesktopReconnect } from "dim-app/desktop_events.js"
+                        {`import { onDesktopEvent, onDesktopReconnect } from "./dim-app/mod.js"
 
 const off = onDesktopEvent("endpoints", (event) => {
     // event.app, event.added, event.removed
