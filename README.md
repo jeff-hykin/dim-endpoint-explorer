@@ -2,7 +2,7 @@
 
 A [dimOS Desktop](https://github.com/jeff-hykin/dimos-desktop) app that maps **every endpoint family of the running
 system**, live, and teaches how data flows between them: Desktop's own API, the dimos server, the agent gateway
-(dimcode), every app's endpoints, and zenoh-web's robot topics.
+(dimcode), every app's endpoints, and zenoh-gateway's robot topics.
 
 ```sh
 dimos-desktop install https://github.com/jeff-hykin/dim-endpoint-explorer
@@ -13,7 +13,7 @@ dimos-desktop install https://github.com/jeff-hykin/dim-endpoint-explorer
 | section       | reads                                                                                | shows                                                                    |
 | ------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
 | Overview      | `/api/endpoints/stats`, `/api/topics/rates`, Desktop's events (zenoh), `/dimos/runs` | an animated data-flow map, each link carrying live calls/s or messages/s |
-| zenoh-web     | `/api/topics`, `/api/topics/rates`, `/api/topics/sample`                             | topics with Hz, bandwidth, sparklines, a sampled payload; zenoh docs     |
+| zenoh-gateway | `/api/topics`, `/api/topics/rates`, `/api/topics/sample`                             | topics with Hz, bandwidth, sparklines, a sampled payload; zenoh docs     |
 | Desktop       | `/api/desktop/openapi`, `/api/desktop/dimos.yaml`                                    | Desktop's API by group, per-endpoint docs and counts, Try it for GETs    |
 | dimos server  | `/api/desktop/openapi` (dimos family), `/dimos/runs`, `/dimos/blueprints`            | the same, plus the running blueprint, its phase and the blueprint count  |
 | Agent gateway | `/agent/api/openapi`, `POST /mcp` `tools/list`                                       | the gateway's API and the MCP tools the agent calls                      |

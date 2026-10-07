@@ -49,7 +49,7 @@
                 {
                     "method": "GET",
                     "path": "/api/topics",
-                    "description": "Every topic zenoh-web sees: topic, type, key"
+                    "description": "Every topic zenoh-gateway sees: topic, type, key"
                 },
                 {
                     "method": "GET",

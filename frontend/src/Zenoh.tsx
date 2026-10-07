@@ -1,6 +1,6 @@
-// zenoh-web: the live topics (GET /api/topics/rates every second, merged with /api/topics' keys), one real sampled
+// zenoh-gateway: the live topics (GET /api/topics/rates every second, merged with /api/topics' keys), one real sampled
 // message per topic (GET /api/topics/sample), and docs on how robot data moves. Facts are from Desktop's
-// src/server/topics.rs + src/zenoh_web.rs, the zenoh-web 0.4.1 crate and dimos's zenoh pubsub.
+// src/server/topics.rs + src/zenoh_gateway.rs, the zenoh-gateway 0.5.0 crate and dimos's zenoh pubsub.
 import { useEffect, useState } from "react"
 import { formatBytes, getJson } from "./desktop.ts"
 import { useJson, useLive } from "./live.ts"
@@ -35,7 +35,7 @@ const KEY_EXAMPLE = "/odom  →  dimos/odom/nav_msgs.Odometry\n/cmd_vel  →  di
 export function ZenohSection() {
     const { rates, ratesError } = useLive()
     const topics = useJson<{ topics: { topic: string; type: string; key: string }[] }>("/api/topics")
-    const status = useJson<Status>("/api/zenoh-web")
+    const status = useJson<Status>("/api/zenoh-gateway")
     const [selected, setSelected] = useState<string | null>(null)
     const keys = new Map((topics.data?.topics ?? []).map((t) => [t.topic, t.key]))
     const list = rates?.topics ?? []
@@ -48,15 +48,15 @@ export function ZenohSection() {
                 <p>
                     A running blueprint's modules talk over{" "}
                     <b>zenoh</b>, a pub/sub network. Desktop joins it as a peer and embeds{" "}
-                    <b>zenoh-web</b>, which bridges topics to browser pages. Everything below is live: rates are counted
-                    by Desktop's subscriber on{" "}
+                    <b>zenoh-gateway</b>, which carries topics to browser pages. Everything below is live: rates are
+                    counted by Desktop's subscriber on{" "}
                     <code>dimos/**</code>, which this page keeps awake by asking every second (it stops 20 s after the
                     last ask).
                 </p>
             </div>
             <div className="totals">
                 <div className="total">
-                    <span className="dim-label">zenoh-web</span>
+                    <span className="dim-label">zenoh-gateway</span>
                     <span className={`dim-badge ${rates?.up ? "ok" : "danger"}`}>
                         {rates ? (rates.up ? "up" : "down") : "…"}
                     </span>
@@ -86,10 +86,10 @@ export function ZenohSection() {
                 <div className="onboard">
                     <EmptyState
                         testId="onboard-link-lost"
-                        label="zenoh-web down"
+                        label="zenoh-gateway down"
                         tone="warn"
-                        title="Desktop's zenoh-web bridge isn't up, so there are no topics"
-                        body="It's what brings robot topics to browser pages. Turn it on or check it in Settings → zenoh-web."
+                        title="Desktop's zenoh-gateway isn't up, so there are no topics"
+                        body="It's what brings robot topics to browser pages. Turn it on or check it in Settings → zenoh-gateway."
                         actions={[{ label: "Open Settings", app: "settings" }]}
                     />
                 </div>
@@ -159,8 +159,8 @@ export function ZenohSection() {
                     <ul>
                         <li>
                             <b>Live streams (apps):</b>{" "}
-                            the page imports zenoh-web's JS client and connects to its own Desktop:{" "}
-                            <code>connect(new URL("../../zenoh-web", location.href).href)</code>, then{" "}
+                            the page imports zenoh-gateway's JS client and connects to its own Desktop:{" "}
+                            <code>connect(new URL("../../zenoh-gateway", location.href).href)</code>, then{" "}
                             <code>subscribe</code>, <code>publisher</code>, <code>listTopics</code>, <code>get</code>,
                             {" "}
                             <code>lease</code>. Data arrives over WebRTC.
@@ -174,7 +174,8 @@ export function ZenohSection() {
                             are the same code.
                         </li>
                         <li>
-                            <b>App backends</b> get <code>zenohWebUrl</code> and <code>zenohConnect</code> in the{" "}
+                            <b>App backends</b> get <code>zenohGatewayUrl</code> and <code>zenohConnect</code> in the
+                            {" "}
                             <code>DIMOS_APP</code> env var to reach the same data.
                         </li>
                     </ul>
@@ -193,7 +194,7 @@ export function ZenohSection() {
                         <code>dimos/…/pkg.Type</code>. RPC uses queryables on <code>dimos/rpc/&lt;name&gt;</code>.
                     </p>
                 </Doc>
-                <Doc title="Codecs: what the bytes are" open>
+                <Doc title="Encodings: what the bytes are" open>
                     <ul>
                         <li>
                             On the wire: <b>LCM</b> (big-endian, packed, an 8-byte type fingerprint first), from{" "}
@@ -207,7 +208,8 @@ export function ZenohSection() {
                             and a note.
                         </li>
                         <li>
-                            zenoh-web's bridge codecs (<code>dimos-*</code>, <code>ros2-*</code>) turn images into{" "}
+                            zenoh-gateway's encodings (<code>dimos_lcm_*</code>, <code>ros2_*</code>) turn images into
+                            {" "}
                             <b>H.264 video</b>{" "}
                             and depth / point clouds into zstd-compressed fields (clouds thinned and quantized to
                             int16), so a browser can keep up.
@@ -223,35 +225,36 @@ export function ZenohSection() {
                             disappears after 5 s of zeros.
                         </li>
                         <li>
-                            <b>zenoh-web leases</b>{" "}
-                            are a bridge feature: one browser client's exclusive right to publish on a group of keys
+                            <b>zenoh-gateway leases</b>{" "}
+                            are a gateway feature: one browser client's exclusive right to publish on a group of keys
                             (e.g. one driver for <code>cmd_vel</code>). Desktop defines no lease groups.
                         </li>
                         <li>
                             <b>Deadmen:</b>{" "}
-                            a publisher arms a message ahead of time (say, a zero velocity); the bridge sends it if that
-                            client misses heartbeats, disconnects (15 s grace) or the bridge stops.
+                            a publisher arms a message ahead of time (say, a zero velocity); the gateway sends it if
+                            that client misses heartbeats, disconnects (15 s grace) or the gateway stops.
                         </li>
                     </ul>
                 </Doc>
                 <Doc title="ACL: who may publish" open>
                     <p>
                         No zenoh <code>access_control</code>{" "}
-                        is configured in Desktop or dimos. zenoh-web would honor one from a zenoh config, and has an
+                        is configured in Desktop or dimos. zenoh-gateway would honor one from a zenoh config, and has an
                         {" "}
                         <code>authorize</code> hook (none set, so every client may do everything). What guards{" "}
-                        <code>/zenoh-web</code>{" "}
+                        <code>/zenoh-gateway</code>{" "}
                         is Desktop's own HTTP auth: loopback is trusted, other machines need the network-access
                         password.
                     </p>
                 </Doc>
                 <Doc title="WebRTC" open>
                     <p>
-                        zenoh-web <em>is</em>{" "}
+                        zenoh-gateway <em>is</em>{" "}
                         the WebRTC path: each subscription or publisher is a data channel, images are H.264 video
-                        tracks. Signaling is one non-trickle <code>POST …/zenoh-web/offer</code>; there are also{" "}
-                        <code>/zenoh-web/ice</code> and{" "}
-                        <code>/zenoh-web/health</code>. The encoder is VideoToolbox, then GStreamer hardware, then
+                        tracks. Signaling is one non-trickle <code>POST …/zenoh-gateway/offer</code>; there are also
+                        {" "}
+                        <code>/zenoh-gateway/ice</code> and{" "}
+                        <code>/zenoh-gateway/health</code>. The encoder is VideoToolbox, then GStreamer hardware, then
                         openh264 (Settings: hardware encode off forces software). dimos's separate{" "}
                         <code>WebRTCPubSub</code> is unrelated.
                     </p>
@@ -267,7 +270,7 @@ export function ZenohSection() {
                         </li>
                         <li>
                             Desktop's session is zenoh's default (a peer with multicast scouting) plus{" "}
-                            <code>zenoh_web.connect</code> if set; the HUD shows "peer" or that endpoint.
+                            <code>zenoh_gateway.connect</code> if set; the HUD shows "peer" or that endpoint.
                         </li>
                         <li>
                             No <code>zenohd</code>{" "}
@@ -412,7 +415,7 @@ function PathDiagram() {
             <Arrow />
             {box(0, 58, 92, "module", "publishes LCM", "zenoh")}
             {box(122, 58, 96, "zenoh", "dimos/odom/…", "zenoh")}
-            {box(256, 8, 110, "zenoh-web", "inside Desktop")}
+            {box(256, 8, 110, "zenoh-gateway", "inside Desktop")}
             {box(256, 108, 110, "topics API", "/api/topics/*")}
             {box(396, 8, 74, "app page", "WebRTC")}
             {box(396, 108, 74, "this page", "fetch")}

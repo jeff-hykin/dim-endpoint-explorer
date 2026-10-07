@@ -12,7 +12,7 @@ import { ZenohSection } from "./Zenoh.tsx"
 export type Section = "overview" | "zenoh" | "desktop" | "dimos" | "agent" | "apps"
 const SECTIONS: { id: Section; label: string; hint: string }[] = [
     { id: "overview", label: "Overview", hint: "the whole system as a live data-flow map" },
-    { id: "zenoh", label: "zenoh-web", hint: "robot topics: rates, payloads, how zenoh works" },
+    { id: "zenoh", label: "zenoh-gateway", hint: "robot topics: rates, payloads, how zenoh works" },
     { id: "desktop", label: "Desktop", hint: "Desktop's own HTTP API" },
     { id: "dimos", label: "dimos server", hint: "blueprints, runs, logs, config" },
     { id: "agent", label: "Agent gateway", hint: "dimcode's API and the MCP tools" },

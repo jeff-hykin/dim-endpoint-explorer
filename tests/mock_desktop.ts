@@ -127,11 +127,11 @@ export function mockDesktop(
             "/dimos/blueprints": () => fixture("blueprints.json"),
             "/api/apps": () => fixture("apps.json"),
             "/api/hud": () => ({ zenoh: "peer" }),
-            "/api/zenoh-web": () => ({
+            "/api/zenoh-gateway": () => ({
                 enabled: true,
                 up: true,
-                url: "/zenoh-web",
-                version: "0.4.1-63b72dd",
+                url: "/zenoh-gateway",
+                version: "0.5.0-28c17f0",
                 encoder: "VideoToolbox",
             }),
             "/dimos/info": () => ({ dir: "/repos/dimos", found: true, installed: true, version: "0.0.9" }),

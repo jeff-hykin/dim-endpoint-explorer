@@ -316,7 +316,7 @@ function EventsContract() {
                         {[
                             [10, "app backend", "manifest changes"],
                             [170, "Desktop registry", "re-reads manifests"],
-                            [330, "zenoh-web", "<ns>/desktop/events/*"],
+                            [330, "zenoh-gateway", "<ns>/desktop/events/*"],
                             [490, "your page", "onDesktopEvent()"],
                         ].map(([x, title, sub]) => (
                             <g key={String(title)} className="dnode">
@@ -343,8 +343,8 @@ function EventsContract() {
                         The rule: a page <b>asks</b> over HTTP and <b>hears</b>{" "}
                         over zenoh. Desktop publishes each event on <code>{"<ns>/desktop/events/<type>"}</code>{" "}
                         (JSON, typed by <code>type</code>; the dimos server's on{" "}
-                        <code>{"<ns>/dimos/events/<type>"}</code>), and the page hears it through Desktop's zenoh-web
-                        bridge on its <b>one</b> zenoh-web connection (dim-app's{" "}
+                        <code>{"<ns>/dimos/events/<type>"}</code>), and the page hears it through Desktop's
+                        zenoh-gateway on its <b>one</b> zenoh-gateway connection (dim-app's{" "}
                         <code>getZenoh()</code>; the namespace comes from{" "}
                         <code>GET /api/desktop/zenoh</code>). Snapshot + live: GET first, apply the events, GET again
                         when the connection comes back. No SSE, no websockets, no polling:

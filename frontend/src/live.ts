@@ -1,7 +1,7 @@
 // The page's live view of the system, shared by every section: call counts (GET /api/endpoints/stats, then Desktop's
-// `endpoint-stats` events on zenoh, which also carry rates decaying to 0; re-read after the zenoh-web connection comes
+// `endpoint-stats` events on zenoh, which also carry rates decaying to 0; re-read after the zenoh-gateway connection comes
 // back), topic rates (GET /api/topics/rates every second: Desktop has no event for them, and the reads keep its counting
-// subscriber alive), and every Desktop event seen (onDesktopEvent: `<ns>/desktop/events/**` on the page's one zenoh-web
+// subscriber alive), and every Desktop event seen (onDesktopEvent: `<ns>/desktop/events/**` on the page's one zenoh-gateway
 // connection).
 import { useEffect, useState, useSyncExternalStore } from "react"
 import { onDesktopEvent, onDesktopReconnect } from "./dim-app/desktop_events.js"

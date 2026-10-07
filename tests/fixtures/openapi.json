@@ -26,8 +26,8 @@
             "x-family": "desktop"
         },
         {
-            "name": "Topics (zenoh-web)",
-            "description": "Live robot topics: the list, publish rates and one sampled message, read from zenoh through zenoh-web.",
+            "name": "Topics (zenoh-gateway)",
+            "description": "Live robot topics: the list, publish rates and one sampled message, read from zenoh through zenoh-gateway.",
             "x-family": "desktop"
         },
         {
@@ -211,10 +211,10 @@
         "/api/topics": {
             "get": {
                 "operationId": "get__api_topics",
-                "summary": "Every topic zenoh-web sees: topic, type, key",
-                "description": "Every topic zenoh-web sees: topic, type, key.",
+                "summary": "Every topic zenoh-gateway sees: topic, type, key",
+                "description": "Every topic zenoh-gateway sees: topic, type, key.",
                 "tags": [
-                    "Topics (zenoh-web)"
+                    "Topics (zenoh-gateway)"
                 ],
                 "parameters": [],
                 "responses": {
@@ -231,7 +231,7 @@
                 "summary": "Per-topic Hz, bytes/s and a short history",
                 "description": "Per-topic Hz, bytes/s and a short history.",
                 "tags": [
-                    "Topics (zenoh-web)"
+                    "Topics (zenoh-gateway)"
                 ],
                 "parameters": [],
                 "responses": {
@@ -248,7 +248,7 @@
                 "summary": "The next message on a topic",
                 "description": "The next message on a topic.",
                 "tags": [
-                    "Topics (zenoh-web)"
+                    "Topics (zenoh-gateway)"
                 ],
                 "parameters": [
                     {

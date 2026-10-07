@@ -1,5 +1,5 @@
 // The Explorer's agent endpoints (http.ts): compact answers about the running system, built from Desktop's own APIs
-// (its openapi, the endpoint registry, the call counts, zenoh-web's topic rates, the runs), so Desktop's agent can ask
+// (its openapi, the endpoint registry, the call counts, zenoh-gateway's topic rates, the runs), so Desktop's agent can ask
 // "what is busy?" without reading five documents. The page itself reads Desktop directly (same origin).
 import { desktopJson, desktopUrl } from "./desktop.ts"
 import { HttpError, type Route } from "./http.ts"
@@ -15,7 +15,7 @@ import {
 } from "./model.ts"
 
 export const DESCRIPTION =
-    "Endpoint Explorer: maps every endpoint family of the running dimOS system (Desktop, the dimos server, the agent gateway, each app, zenoh-web topics) with live call counts and topic rates"
+    "Endpoint Explorer: maps every endpoint family of the running dimOS system (Desktop, the dimos server, the agent gateway, each app, zenoh-gateway topics) with live call counts and topic rates"
 
 type Runs = { runs?: { blueprint: string }[]; launch?: { blueprint: string; phase: string } | null }
 
@@ -59,7 +59,7 @@ export const routes: Route[] = [
                 busiest: busiest(stats),
                 topics: {
                     count: topics.length,
-                    zenohWebUp: rates?.up ?? false,
+                    zenohGatewayUp: rates?.up ?? false,
                     busiest: topics.slice(0, 5).map(({ topic, type, hz, bps }) => ({ topic, type, hz, bps })),
                 },
                 running: runs?.launch ??

@@ -1,5 +1,5 @@
 // Overview: the system as one picture. Every box is a real piece of the running system; every line carries live
-// traffic: calls/s from Desktop's call counts, messages/s from zenoh-web's topic rates, events/s seen by this page.
+// traffic: calls/s from Desktop's call counts, messages/s from zenoh-gateway's topic rates, events/s seen by this page.
 import { familyRate, formatRate, type RegistryApp, type Runs } from "./desktop.ts"
 import { curve, FlowEdge } from "./flow.tsx"
 import { useJson, useLive } from "./live.ts"
@@ -112,7 +112,7 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
                     <span className="dim-label">topics</span>
                     <span className="big">{topicCount}</span>
                     <span className="dim-muted small">
-                        {rates?.up === false ? "zenoh-web is down" : "via zenoh-web"}
+                        {rates?.up === false ? "zenoh-gateway is down" : "via zenoh-gateway"}
                     </span>
                 </div>
                 <div className="total">
@@ -173,7 +173,7 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
                         return <FlowEdge key={app.app} {...edge(R(appProxy), L(backend(i)))} rate={r} />
                     })}
 
-                    {/* robot data: blueprint → zenoh → zenoh-web */}
+                    {/* robot data: blueprint → zenoh → zenoh-gateway */}
                     <line className="bus" x1={342} y1={busY} x2={1080} y2={busY} />
                     <text className="bus-label" x={711} y={busY + 26} textAnchor="middle" onClick={() => go("zenoh")}>
                         zenoh · keys dimos/&lt;topic&gt;/&lt;type&gt; · LCM bytes
@@ -257,8 +257,8 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
                     <Node
                         box={zweb}
                         kind="port zenoh"
-                        title="zenoh-web"
-                        sub="/zenoh-web · /api/topics"
+                        title="zenoh-gateway"
+                        sub="/zenoh-gateway · /api/topics"
                         metric={formatRate(zenohHz, " msg/s")}
                         onClick={() => go("zenoh")}
                         status={rates?.up ? "ok" : "off"}
@@ -304,7 +304,7 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
                         <i className="sw event" /> events pushed to pages (seen here)
                     </span>
                     <span>
-                        <i className="sw msg" /> zenoh messages/s (zenoh-web rates)
+                        <i className="sw msg" /> zenoh messages/s (zenoh-gateway rates)
                     </span>
                     <span className="dim-muted">Click any box to open its section.</span>
                 </div>
@@ -354,8 +354,8 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
                     <h3>2 · Changes come down</h3>
                     <p>
                         Nobody polls for "did something change?". Desktop publishes its events on zenoh,{" "}
-                        <code>{"<ns>/desktop/events/<type>"}</code>, and every page hears them over its one zenoh-web
-                        connection: <code>apps</code>, <code>endpoints</code>, <code>runs</code>,{" "}
+                        <code>{"<ns>/desktop/events/<type>"}</code>, and every page hears them over its one
+                        zenoh-gateway connection: <code>apps</code>, <code>endpoints</code>, <code>runs</code>,{" "}
                         <code>blueprints</code>, <code>endpoint-stats</code>… This page listens with the SDK's{" "}
                         <code>onDesktopEvent</code>, which is how these numbers move. Apps' backends push to their pages
                         the same way, through <code>{"POST /desktop/frontend/<app>/<topic>"}</code>.
@@ -369,7 +369,7 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
                     <p>
                         The blueprint's modules publish on{" "}
                         <b>zenoh</b>, not HTTP. Desktop joins zenoh as a peer and embeds{" "}
-                        <b>zenoh-web</b>, which hands topics to pages over WebRTC and answers{" "}
+                        <b>zenoh-gateway</b>, which hands topics to pages over WebRTC and answers{" "}
                         <code>/api/topics</code>. Rates here are messages/s, not calls.
                     </p>
                     <button type="button" className="dim-btn sm" onClick={() => go("zenoh")}>

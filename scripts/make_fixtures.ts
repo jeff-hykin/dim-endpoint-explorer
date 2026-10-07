@@ -23,9 +23,9 @@ const tags = [
         "Desktop-wide settings shared by every page: theme, OS notifications, network access (read-only here).",
     ],
     [
-        "Topics (zenoh-web)",
+        "Topics (zenoh-gateway)",
         "desktop",
-        "Live robot topics: the list, publish rates and one sampled message, read from zenoh through zenoh-web.",
+        "Live robot topics: the list, publish rates and one sampled message, read from zenoh through zenoh-gateway.",
     ],
     [
         "Events",
@@ -68,9 +68,9 @@ const ops: Op[] = [
     ["get", "/api/ui-settings", "UI settings", "The shared UI settings"],
     ["put", "/api/ui-settings", "UI settings", "Change UI settings"],
     ["get", "/api/hud", "UI settings", "What the HUD shows"],
-    ["get", "/api/topics", "Topics (zenoh-web)", "Every topic zenoh-web sees: topic, type, key"],
-    ["get", "/api/topics/rates", "Topics (zenoh-web)", "Per-topic Hz, bytes/s and a short history"],
-    ["get", "/api/topics/sample", "Topics (zenoh-web)", "The next message on a topic", [[
+    ["get", "/api/topics", "Topics (zenoh-gateway)", "Every topic zenoh-gateway sees: topic, type, key"],
+    ["get", "/api/topics/rates", "Topics (zenoh-gateway)", "Per-topic Hz, bytes/s and a short history"],
+    ["get", "/api/topics/sample", "Topics (zenoh-gateway)", "The next message on a topic", [[
         "topic",
         "string",
         true,
