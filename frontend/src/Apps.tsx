@@ -2,10 +2,30 @@
 // with live counts per endpoint. Re-read on the {type:"endpoints"} and {type:"apps"} events, so installing or
 // rebuilding an app shows up here without a reload. Also: the frontend ↔ backend events contract.
 import { useEffect, useMemo, useState } from "react"
+import {
+    Alert,
+    Badge,
+    Card,
+    Checkbox,
+    CodeBlock,
+    Heading,
+    Label,
+    Link,
+    List,
+    ListRow,
+    LiveValue,
+    Markdown,
+    Row,
+    SearchInput,
+    Sparkline,
+    Table,
+    Text,
+} from "dimos-react"
+import { EndpointStats } from "./ApiSection.tsx"
 import { ago, countsFor, formatRate, matchesTemplate, type RegistryApp, type RegistryEndpoint } from "./desktop.ts"
-import { type DesktopEvent, useJson, useLive, useNow } from "./live.ts"
-import { describeEvent } from "./Overview.tsx"
-import { Arrow, Doc, Live, Method, Notice, Sparkline, TryIt, unsafeGet } from "./ui.tsx"
+import { useJson, useLive, useNow } from "./live.ts"
+import { EventFeed } from "./Overview.tsx"
+import { Arrow, Doc, Method, ParamTable, TryIt, unsafeGet } from "./ui.tsx"
 
 export function AppsSection({ focus }: { focus?: string }) {
     const live = useLive()
@@ -51,75 +71,58 @@ export function AppsSection({ focus }: { focus?: string }) {
     const endpointRow = (owner: RegistryApp, e: RegistryEndpoint, showApp = false) => {
         const id = `${owner.app} ${e.method} ${e.path}`
         const c = countsFor(live.stats, family(owner), e.method, e.path)
-        const fresh = added.has(id)
         return (
-            <div key={id} className={`ep ${open === id ? "open" : ""} ${fresh ? "fresh" : ""}`}>
-                <button type="button" className="ep-row" onClick={() => setOpen(open === id ? null : id)}>
-                    <Method method={e.method} />
-                    <span className="ep-path">{showApp ? <span className="fam">{owner.app}</span> : null}{e.path}</span>
-                    <span className="ep-summary">{e.description}</span>
-                    {e.role && (
-                        <span
-                            className="dim-badge info"
-                            title={e.role === "view"
-                                ? "what screenshot() calls"
-                                : "what desktop_context adds while the app is focused"}
-                        >
-                            {e.role}
-                        </span>
-                    )}
-                    <Sparkline values={live.history[`${family(owner)} ${e.method} ${e.path}`]} width={64} height={18} />
-                    <span className="ep-count">
-                        <Live value={c.calls} format={(n) => n.toLocaleString()} />
-                    </span>
-                    {c.errors > 0 && <span className="dim-badge danger">{c.errors} err</span>}
-                    <span className="ep-last dim-muted">{ago(c.lastCall, now)}</span>
-                </button>
+            <div key={id} className={added.has(id) ? "ee-endpoint-fresh" : undefined}>
+                <ListRow
+                    icon={<Method method={e.method} />}
+                    title={
+                        <Row gap={8}>
+                            {showApp ? <Badge>{owner.app}</Badge> : null}
+                            <Text mono>{e.path}</Text>
+                        </Row>
+                    }
+                    subtitle={e.description}
+                    selected={open === id}
+                    onClick={() => setOpen(open === id ? null : id)}
+                    meta={
+                        <Row gap={8}>
+                            {e.role && (
+                                <Badge
+                                    tone="info"
+                                    title={e.role === "view"
+                                        ? "what screenshot() calls"
+                                        : "what desktop_context adds while the app is focused"}
+                                >
+                                    {e.role}
+                                </Badge>
+                            )}
+                            <Sparkline
+                                values={live.history[`${family(owner)} ${e.method} ${e.path}`] ?? []}
+                                width={64}
+                                height={18}
+                            />
+                            <Text mono>
+                                <LiveValue value={c.calls} format={(n: number) => n.toLocaleString()} />
+                            </Text>
+                            {c.errors > 0 && <Badge tone="danger">{c.errors} err</Badge>}
+                            <Text small muted>{ago(c.lastCall, now)}</Text>
+                        </Row>
+                    }
+                />
                 {open === id && (
-                    <div className="ep-doc">
-                        <div className="ep-stats">
-                            <span>
-                                <b>{c.calls.toLocaleString()}</b> calls
-                            </span>
-                            <span>
-                                <b>{c.errors}</b> errors
-                            </span>
-                            <span>
-                                <b>{formatRate(c.perSec)}</b> now
-                            </span>
-                            <span>
-                                mean <b>{c.meanMs.toFixed(1)} ms</b>
-                            </span>
-                            <span>
-                                last call <b>{ago(c.lastCall, now)}</b>
-                            </span>
-                            <span className="dim-muted">
-                                reached at <code>{urlOf(owner, e.path)}</code>
-                            </span>
-                        </div>
-                        {e.description && <p>{e.description}</p>}
+                    <div className="ee-endpoint-doc">
+                        <EndpointStats
+                            counts={c}
+                            now={now}
+                            extra={
+                                <Text small muted>
+                                    reached at <Text mono>{urlOf(owner, e.path)}</Text>
+                                </Text>
+                            }
+                        />
+                        {e.description && <Text as="p">{e.description}</Text>}
                         {e.params && Object.keys(e.params).length > 0 && (
-                            <table className="dim-table compact">
-                                <thead>
-                                    <tr>
-                                        <th>param</th>
-                                        <th>type</th>
-                                        <th>description</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {Object.entries(e.params).map(([name, p]) => (
-                                        <tr key={name}>
-                                            <td className="dim-mono">
-                                                {name}
-                                                {p.required ? <span className="req">*</span> : null}
-                                            </td>
-                                            <td className="dim-mono">{p.type}</td>
-                                            <td>{p.description}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                            <ParamTable rows={Object.entries(e.params).map(([name, p]) => ({ name, ...p }))} />
                         )}
                         {e.method === "GET" && !unsafeGet(e.path) && (
                             <TryIt
@@ -133,10 +136,10 @@ export function AppsSection({ focus }: { focus?: string }) {
                             />
                         )}
                         {e.method !== "GET" && (
-                            <div className="dim-muted small">
+                            <Text small muted>
                                 Not a GET: Try it only calls safe reads. The agent calls this through MCP's
                                 call_endpoint.
-                            </div>
+                            </Text>
                         )}
                     </div>
                 )}
@@ -145,119 +148,97 @@ export function AppsSection({ focus }: { focus?: string }) {
     }
 
     return (
-        <div className="apps">
-            <div className="intro">
-                <p>
-                    Each app is a backend Desktop starts, plus a page served at <code>/apps/&lt;name&gt;/</code>. Its
-                    {" "}
-                    <code>dimos.yaml</code> (or <code>agent.json</code> /{" "}
-                    <code>openapi.json</code>) lists its endpoints; Desktop puts them in one registry, which is what the
-                    agent searches and what you see here. Counts come from Desktop's app proxy.
-                </p>
-            </div>
-            {registry.error && <Notice kind="warn">/api/endpoints: {registry.error}</Notice>}
-            <div className="apps-grid">
-                <nav className="apps-nav">
-                    <input
-                        className="dim-input"
-                        placeholder="Search every app's endpoints"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                    />
-                    <label className="dim-check small">
-                        <input type="checkbox" checked={builtins} onChange={(e) => setBuiltins(e.target.checked)} />
-                        <span className="box" /> include Desktop's builtins
-                    </label>
-                    {apps.map((a) => {
-                        const fam = family(a)
-                        const frontend = countsFor(live.stats, fam, "GET", "(frontend)")
-                        const rate = (live.stats?.families?.[fam] ?? []).reduce((s, r) => s + r.perSec, 0)
-                        return (
-                            <button
-                                key={a.app}
-                                type="button"
-                                className={`app-item ${a.app === selected && !q ? "on" : ""}`}
-                                onClick={() => {
-                                    setSelected(a.app)
-                                    setQuery("")
-                                }}
-                            >
-                                <img
-                                    className="app-icon"
-                                    src={`/api/apps/${encodeURIComponent(a.app)}/icon`}
-                                    alt=""
-                                    onError={(e) => (e.currentTarget.style.visibility = "hidden")}
+        <>
+            <Card>
+                <Markdown text="Each app is a backend Desktop starts, plus a page served at `/apps/<name>/`. Its `dimos.yaml` (or `agent.json` / `openapi.json`) lists its endpoints; Desktop puts them in one registry, which is what the agent searches and what you see here. Counts come from Desktop's app proxy." />
+            </Card>
+            {registry.error && <Alert tone="warn">/api/endpoints: {registry.error}</Alert>}
+            <div className="ee-split">
+                <nav className="ee-split__nav">
+                    <SearchInput placeholder="Search every app's endpoints" value={query} onChange={setQuery} />
+                    <Checkbox value={builtins} onChange={setBuiltins} label="include Desktop's builtins" />
+                    <List>
+                        {apps.map((a) => {
+                            const fam = family(a)
+                            const frontend = countsFor(live.stats, fam, "GET", "(frontend)")
+                            const rate = (live.stats?.families?.[fam] ?? []).reduce((s, r) => s + r.perSec, 0)
+                            return (
+                                <ListRow
+                                    key={a.app}
+                                    icon={
+                                        <img
+                                            className="ee-app-icon"
+                                            src={`/api/apps/${encodeURIComponent(a.app)}/icon`}
+                                            alt=""
+                                            onError={(e) => (e.currentTarget.style.visibility = "hidden")}
+                                        />
+                                    }
+                                    title={a.title ?? a.app}
+                                    subtitle={`${a.endpoints.length} endpoints · ${a.source} · page loads ${frontend.calls}`}
+                                    meta={
+                                        <Row gap={6}>
+                                            <Sparkline values={live.history[fam] ?? []} width={48} height={16} />
+                                            <Text small>{formatRate(rate)}</Text>
+                                        </Row>
+                                    }
+                                    selected={a.app === selected && !q}
+                                    onClick={() => {
+                                        setSelected(a.app)
+                                        setQuery("")
+                                    }}
                                 />
-                                <span className="app-text">
-                                    <span className="app-title">{a.title ?? a.app}</span>
-                                    <span className="dim-muted tiny">
-                                        {a.endpoints.length} endpoints · {a.source} · page loads {frontend.calls}
-                                    </span>
-                                </span>
-                                <span className="app-rate">
-                                    <Sparkline values={live.history[fam]} width={48} height={16} />
-                                    <span className="tiny">{formatRate(rate)}</span>
-                                </span>
-                            </button>
-                        )
-                    })}
-                    <div className="dim-muted tiny refreshed">
-                        registry refreshed by: {registry.refreshedBy ?? "first load"}
-                    </div>
+                            )
+                        })}
+                    </List>
+                    <Text small muted>registry refreshed by: {registry.refreshedBy ?? "first load"}</Text>
                 </nav>
-                <div className="apps-main">
+                <div className="ee-split__main">
                     {q && (
-                        <div className="endpoints">
-                            <div className="dim-muted small">{matches.length} endpoints matching “{query}”</div>
-                            {matches.map(({ app: owner, e }) => endpointRow(owner, e, true))}
-                        </div>
+                        <>
+                            <Text small muted>{matches.length} endpoints matching “{query}”</Text>
+                            <List>{matches.map(({ app: owner, e }) => endpointRow(owner, e, true))}</List>
+                        </>
                     )}
                     {!q && app && (
                         <>
-                            <div className="group-doc dim-card">
-                                <h3>
-                                    {app.title ?? app.app} <span className="dim-muted small dim-mono">{app.app}</span>
-                                </h3>
-                                {app.description && <p>{app.description}</p>}
-                                <div className="dim-muted small">
+                            <Card
+                                title={
+                                    <Row gap={8} align="baseline">
+                                        {app.title ?? app.app}
+                                        <Text mono small muted>{app.app}</Text>
+                                    </Row>
+                                }
+                            >
+                                {app.description && <Text as="p">{app.description}</Text>}
+                                <Text small muted>
                                     endpoints from <b>{app.source}</b>
                                     {app.manifestUrl && (
                                         <>
-                                            ·{" "}
-                                            <a
-                                                className="dim-link"
-                                                href={app.manifestUrl}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                            >
+                                            {" · "}
+                                            <Link href={app.manifestUrl} target="_blank" rel="noreferrer">
                                                 {app.manifestUrl}
-                                            </a>
+                                            </Link>
                                         </>
                                     )}
                                     {app.source !== "builtin" && (
                                         <>
-                                            · page at{" "}
-                                            <a
-                                                className="dim-link"
-                                                href={`/apps/${app.app}/`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                            >
+                                            {" · page at "}
+                                            <Link href={`/apps/${app.app}/`} target="_blank" rel="noreferrer">
                                                 /apps/{app.app}/
-                                            </a>
+                                            </Link>
                                         </>
                                     )}
-                                </div>
-                            </div>
-                            <div className="endpoints">{app.endpoints.map((e) => endpointRow(app, e))}</div>
+                                </Text>
+                            </Card>
+                            <List>{app.endpoints.map((e) => endpointRow(app, e))}</List>
                             <UnlistedCalls family={family(app)} listed={app.endpoints} />
                         </>
                     )}
-                    {!q && !app && <div className="dim-muted pad">No apps installed.</div>}
+                    {!q && !app && <Text muted>No apps installed.</Text>}
                 </div>
             </div>
             <EventsContract />
-        </div>
+        </>
     )
 }
 
@@ -285,33 +266,52 @@ function UnlistedCalls({ family, listed }: { family: string; listed: RegistryEnd
     )
     const frontend = countsFor(stats, family, "GET", "(frontend)")
     return (
-        <div className="unlisted small dim-muted">
-            <span>
-                page assets served:{" "}
-                <b>
-                    <Live value={frontend.calls} />
-                </b>{" "}
-                (counted as <code>(frontend)</code>)
-            </span>
+        <Text small muted>
+            page assets served:{" "}
+            <b>
+                <LiveValue value={frontend.calls} />
+            </b>{" "}
+            (counted as <Text mono>(frontend)</Text>)
             {rows.length > 0 && (
-                <span>
-                    · calls to paths the manifest doesn't list:{" "}
+                <>
+                    {" "}· calls to paths the manifest doesn't list:{" "}
                     {rows.map((r) => `${r.method} ${r.path} (${r.calls})`).join(", ")}
-                </span>
+                </>
             )}
-        </div>
+        </Text>
     )
 }
 
+const STANDARD_EVENTS: { type: string; meaning: string }[] = [
+    { type: "apps", meaning: "an app was installed, removed, updated, started or stopped" },
+    { type: "endpoints", meaning: "an app's endpoints changed: `app, added, removed`" },
+    { type: "blueprints", meaning: "the blueprint list changed (file watcher): `added, removed`" },
+    { type: "runs", meaning: "a blueprint run started or stopped" },
+    { type: "dimos", meaning: "the dimos server's launch / log / upload events" },
+    { type: "notification", meaning: "a new notification (the SDK's `notify()` posts them)" },
+    { type: "ui-settings", meaning: "a shared setting changed" },
+    { type: "endpoint-stats", meaning: "call counts changed: `totals, changed[]`, at most once a second" },
+]
+
+const EVENTS_EXAMPLE = `import { onDesktopEvent, onDesktopReconnect } from "./dim-app/mod.js"
+
+const off = onDesktopEvent("endpoints", (event) => {
+    // event.app, event.added, event.removed
+    reloadEndpoints()          // this section does exactly this
+})
+onDesktopEvent("apps", reloadEndpoints)   // installed, removed, started…
+onDesktopEvent("*", (event) => log(event)) // everything
+onDesktopReconnect(reloadEndpoints)       // events sent while the link was down are gone`
+
 function EventsContract() {
     const { events } = useLive()
-    const relevant = events.filter((e: DesktopEvent) => e.type !== "endpoint-stats").slice(0, 8)
+    const relevant = events.filter((e) => e.type !== "endpoint-stats").slice(0, 20)
     return (
-        <div id="events" className="contract">
-            <h3 className="docs-h">The frontend ↔ backend events contract</h3>
-            <div className="docs-grid">
+        <div id="events">
+            <Heading level={2}>The frontend ↔ backend events contract</Heading>
+            <div className="ee-grid ee-grid--wide">
                 <Doc title="How a page hears what changed" open>
-                    <svg className="diagram" viewBox="0 0 640 210">
+                    <svg className="ee-diagram" viewBox="0 0 640 210">
                         <Arrow />
                         {[
                             [10, "app backend", "manifest changes"],
@@ -339,119 +339,33 @@ function EventsContract() {
                             <text x={480} y={180} textAnchor="middle">GET /api/endpoints again</text>
                         </g>
                     </svg>
-                    <p>
-                        The rule: a page <b>asks</b> over HTTP and <b>hears</b>{" "}
-                        over zenoh. Desktop publishes each event on <code>{"<ns>/desktop/events/<type>"}</code>{" "}
-                        (JSON, typed by <code>type</code>; the dimos server's on{" "}
-                        <code>{"<ns>/dimos/events/<type>"}</code>), and the page hears it through Desktop's
-                        zenoh-gateway on its <b>one</b> zenoh-gateway connection (dim-app's{" "}
-                        <code>getZenoh()</code>; the namespace comes from{" "}
-                        <code>GET /api/desktop/zenoh</code>). Snapshot + live: GET first, apply the events, GET again
-                        when the connection comes back. No SSE, no websockets, no polling:
-                    </p>
-                    <pre className="code-block">
-                        {`import { onDesktopEvent, onDesktopReconnect } from "./dim-app/mod.js"
-
-const off = onDesktopEvent("endpoints", (event) => {
-    // event.app, event.added, event.removed
-    reloadEndpoints()          // this section does exactly this
-})
-onDesktopEvent("apps", reloadEndpoints)   // installed, removed, started…
-onDesktopEvent("*", (event) => log(event)) // everything
-onDesktopReconnect(reloadEndpoints)       // events sent while the link was down are gone`}
-                    </pre>
-                    <p className="small">
-                        An app's <em>own</em>{" "}
-                        backend pushes to its pages the same way: one HTTP call to Desktop's relay,{" "}
-                        <code>{"POST /desktop/frontend/<app>/<topic>"}</code> (any language; dim-app's{" "}
-                        <code>publishFrontend(topic, payload)</code>), which publishes the body on{" "}
-                        <code>{"<ns>/apps/<app>/frontend/<topic>"}</code>; a Rust or Python backend with zenoh may
-                        publish there itself (<code>zenohPrefix</code> in{" "}
-                        <code>DIMOS_APP</code>). The page subscribes with{" "}
-                        <code>getZenoh().subscribeFrontend(topic, cb)</code>, or for state the agent can change,{" "}
-                        <code>useBackendState(key)</code>: it GETs, and re-GETs when the backend's{" "}
-                        <code>stateChanged(key)</code> publishes <code>{"{key, version}"}</code> on{" "}
-                        <code>state/&lt;key&gt;</code>.
-                    </p>
+                    <Markdown text="The rule: a page **asks** over HTTP and **hears** over zenoh. Desktop publishes each event on `<ns>/desktop/events/<type>` (JSON, typed by `type`; the dimos server's on `<ns>/dimos/events/<type>`), and the page hears it through Desktop's zenoh-gateway on its **one** zenoh-gateway connection (dim-app's `getZenoh()`; the namespace comes from `GET /api/desktop/zenoh`). Snapshot + live: GET first, apply the events, GET again when the connection comes back. No SSE, no websockets, no polling:" />
+                    <CodeBlock code={EVENTS_EXAMPLE} language="js" />
+                    <Markdown text="An app's *own* backend pushes to its pages the same way: one HTTP call to Desktop's relay, `POST /desktop/frontend/<app>/<topic>` (any language; dim-app's `publishFrontend(topic, payload)`), which publishes the body on `<ns>/apps/<app>/frontend/<topic>`; a Rust or Python backend with zenoh may publish there itself (`zenohPrefix` in `DIMOS_APP`). The page subscribes with `getZenoh().subscribeFrontend(topic, cb)`, or for state the agent can change, `useBackendState(key)`: it GETs, and re-GETs when the backend's `stateChanged(key)` publishes `{key, version}` on `state/<key>`." />
                 </Doc>
                 <Doc title="The standard events" open>
-                    <table className="dim-table compact">
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <code>apps</code>
-                                </td>
-                                <td>an app was installed, removed, updated, started or stopped</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <code>endpoints</code>
-                                </td>
-                                <td>
-                                    an app's endpoints changed: <code>app, added, removed</code>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <code>blueprints</code>
-                                </td>
-                                <td>
-                                    the blueprint list changed (file watcher): <code>added, removed</code>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <code>runs</code>
-                                </td>
-                                <td>a blueprint run started or stopped</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <code>dimos</code>
-                                </td>
-                                <td>the dimos server's launch / log / upload events</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <code>notification</code>
-                                </td>
-                                <td>
-                                    a new notification (the SDK's <code>notify()</code> posts them)
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <code>ui-settings</code>
-                                </td>
-                                <td>a shared setting changed</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <code>endpoint-stats</code>
-                                </td>
-                                <td>
-                                    call counts changed: <code>totals, changed[]</code>, at most once a second
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div className="dim-label" style={{ marginTop: 12 }}>
-                        heard by this page (endpoint-stats hidden)
-                    </div>
-                    <ul className="event-feed">
-                        {relevant.map((event, i) => (
-                            <li key={`${event.at}-${i}`}>
-                                <span className="dim-mono dim-muted">
-                                    {new Date(event.at).toLocaleTimeString([], { hour12: false })}
-                                </span>
-                                <span className={`ev ev-${event.type}`}>{event.type}</span>
-                                <span className="dim-muted ev-detail">{describeEvent(event)}</span>
-                            </li>
-                        ))}
-                        {!relevant.length && (
-                            <li className="dim-muted">Nothing yet: install or rebuild an app, or start a blueprint.</li>
-                        )}
-                    </ul>
+                    <Table
+                        compact
+                        rowKey="type"
+                        rows={STANDARD_EVENTS}
+                        columns={[
+                            {
+                                key: "type",
+                                label: "type",
+                                render: (row: { type: string }) => <Text mono>{row.type}</Text>,
+                            },
+                            {
+                                key: "meaning",
+                                label: "when",
+                                render: (row: { meaning: string }) => <Markdown text={row.meaning} inline />,
+                            },
+                        ]}
+                    />
+                    <Label>heard by this page (endpoint-stats hidden)</Label>
+                    <EventFeed
+                        events={relevant}
+                        empty="Nothing yet: install or rebuild an app, or start a blueprint."
+                    />
                 </Doc>
             </div>
         </div>

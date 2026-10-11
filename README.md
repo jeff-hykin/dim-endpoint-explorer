@@ -34,6 +34,9 @@ They are built from Desktop's APIs at `DIMOS_APP`'s `desktopUrl`.
 
 ## Development
 
+The page is React built from [dimos-react](https://github.com/jeff-hykin/dimos-react) (theme, every control, card, table
+and panel); `frontend/package.json` pins it to a release tag. The app keeps only its data code and the data-flow SVGs.
+
 ```sh
 deno task test && deno task check     # backend tests (against a stand-in Desktop), dimos.yaml ↔ routes check
 cd frontend && npm install && npm run typecheck && npm run build

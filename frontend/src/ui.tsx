@@ -1,68 +1,47 @@
-// Small shared pieces: sparklines, method badges, numbers that flash when they change, doc cards, and "Try it".
-import { type ReactNode, useEffect, useRef, useState } from "react"
+// Small shared pieces built on dimos-react: method badges, doc panels, "Try it", parameter tables, and the arrowhead
+// the diagrams use.
+import { type ReactNode, useState } from "react"
+import { Alert, Badge, Button, CodeBlock, Panel, Row, Table, Text, TextInput } from "dimos-react"
 import { formatBytes } from "./desktop.ts"
 
-export function Sparkline({ values, width = 90, height = 22, className = "" }: {
-    values?: number[]
-    width?: number
-    height?: number
-    className?: string
-}) {
-    const data = values?.length ? values : [0]
-    const max = Math.max(...data, 0.0001)
-    const step = data.length > 1 ? width / (data.length - 1) : width
-    const points = data.map((v, i) => `${(i * step).toFixed(1)},${(height - 2 - (v / max) * (height - 4)).toFixed(1)}`)
-    const flat = data.every((v) => v === 0)
-    return (
-        <svg
-            className={`spark ${flat ? "flat" : ""} ${className}`}
-            width={width}
-            height={height}
-            viewBox={`0 0 ${width} ${height}`}
-        >
-            {!flat && <polygon className="spark-fill" points={`0,${height} ${points.join(" ")} ${width},${height}`} />}
-            <polyline className="spark-line" points={points.join(" ")} />
-        </svg>
-    )
-}
+const METHOD_TONES: Record<string, string> = { GET: "info", POST: "ok", PUT: "warn", PATCH: "warn", DELETE: "danger" }
 
 export function Method({ method }: { method: string }) {
-    return <span className={`method m-${method.toLowerCase()}`}>{method}</span>
+    return <Badge tone={METHOD_TONES[method.toUpperCase()] ?? "default"} solid>{method}</Badge>
 }
 
-/** a number that briefly lights up when it changes (live counts) */
-export function Live({ value, format = String, className = "" }: {
-    value: number
-    format?: (n: number) => string
-    className?: string
+/** a collapsible doc card */
+export function Doc({ title, children, open = false }: { title: string; children: ReactNode; open?: boolean }) {
+    return <Panel title={title} collapsible defaultOpen={open}>{children}</Panel>
+}
+
+/** name / type / description rows (a required name gets a *) */
+export function ParamTable({ rows, showIn = false }: {
+    rows: { name: string; in?: string; type?: string; description?: string; required?: boolean }[]
+    showIn?: boolean
 }) {
-    const last = useRef(value)
-    const [flash, setFlash] = useState(0)
-    useEffect(() => {
-        if (value !== last.current) {
-            last.current = value
-            setFlash((n) => n + 1)
-        }
-    }, [value])
-    return <span key={flash} className={`live-num ${flash ? "flash" : ""} ${className}`}>{format(value)}</span>
-}
-
-export function Doc(
-    { title, children, open = false, icon }: { title: string; children: ReactNode; open?: boolean; icon?: ReactNode },
-) {
     return (
-        <details className="doc dim-card" open={open}>
-            <summary>
-                {icon}
-                <span>{title}</span>
-            </summary>
-            <div className="doc-body">{children}</div>
-        </details>
+        <Table
+            compact
+            rowKey="name"
+            rows={rows}
+            columns={[
+                {
+                    key: "name",
+                    label: "param",
+                    render: (p: { name: string; required?: boolean }) => (
+                        <Text mono>
+                            {p.name}
+                            {p.required ? <Text tone="danger">*</Text> : null}
+                        </Text>
+                    ),
+                },
+                ...(showIn ? [{ key: "in", label: "in" }] : []),
+                { key: "type", label: "type", render: (p: { type?: string }) => <Text mono>{p.type ?? ""}</Text> },
+                { key: "description", label: "description" },
+            ]}
+        />
     )
-}
-
-export function Notice({ kind = "info", children }: { kind?: "info" | "warn" | "danger"; children: ReactNode }) {
-    return <div className={`notice ${kind}`}>{children}</div>
 }
 
 export type TryParam = { name: string; in: "path" | "query"; required?: boolean; description?: string }
@@ -123,45 +102,40 @@ export function TryIt({ url, params = [] }: { url: string; params?: TryParam[] }
         }
     }
     return (
-        <div className="tryit">
-            <div className="tryit-row">
+        <Panel title="Try it" icon="play">
+            <Row wrap gap={10} align="end">
                 {params.map((p) => (
-                    <label key={p.name} className="tryit-param" title={p.description}>
-                        <span className="dim-mono">{p.name}{p.required ? "*" : ""}</span>
-                        <input
-                            className="dim-input"
+                    <label key={p.name} title={p.description}>
+                        <Text mono small>{p.name}{p.required ? "*" : ""}</Text>
+                        <TextInput
+                            size="sm"
                             value={values[p.name] ?? ""}
                             placeholder={p.description ?? p.in}
-                            onChange={(e) => setValues({ ...values, [p.name]: e.target.value })}
-                            onKeyDown={(e) => e.key === "Enter" && !missing.length && run()}
+                            onChange={(value: string) => setValues({ ...values, [p.name]: value })}
+                            onEnter={() => !missing.length && run()}
                         />
                     </label>
                 ))}
-                <button
-                    type="button"
-                    className="dim-btn primary sm"
-                    disabled={busy || missing.length > 0}
-                    onClick={run}
-                >
-                    {busy ? "Calling…" : "Try it"}
-                </button>
-                <code className="tryit-url">GET {build()}</code>
-            </div>
-            {result && "error" in result && <Notice kind="danger">{result.error}</Notice>}
+                <Button variant="primary" size="sm" loading={busy} disabled={missing.length > 0} onClick={run}>
+                    Try it
+                </Button>
+                <Text mono small muted>GET {build()}</Text>
+            </Row>
+            {result && "error" in result && <Alert tone="danger">{result.error}</Alert>}
             {result && !("error" in result) && (
-                <div className="tryit-result">
-                    <div className="tryit-meta">
-                        <span className={`dim-badge ${result.status < 400 ? "ok" : "danger"}`}>{result.status}</span>
-                        <span>{result.ms} ms</span>
-                        <span>{formatBytes(result.bytes)}</span>
-                        <span className="dim-muted">{result.type}</span>
-                    </div>
+                <>
+                    <Row gap={10} wrap>
+                        <Badge tone={result.status < 400 ? "ok" : "danger"}>{result.status}</Badge>
+                        <Text small>{result.ms} ms</Text>
+                        <Text small>{formatBytes(result.bytes)}</Text>
+                        <Text small muted>{result.type}</Text>
+                    </Row>
                     {result.image
-                        ? <img className="tryit-img" src={result.image} />
-                        : <pre className="code-block">{result.body}</pre>}
-                </div>
+                        ? <img className="ee-sample-img" src={result.image} />
+                        : <CodeBlock code={result.body ?? ""} language="json" maxHeight={420} />}
+                </>
             )}
-        </div>
+        </Panel>
     )
 }
 

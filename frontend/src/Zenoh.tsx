@@ -2,10 +2,28 @@
 // message per topic (GET /api/topics/sample), and docs on how robot data moves. Facts are from Desktop's
 // src/server/topics.rs + src/zenoh_gateway.rs, the zenoh-gateway 0.5.0 crate and dimos's zenoh pubsub.
 import { useEffect, useState } from "react"
-import { formatBytes, getJson } from "./desktop.ts"
+import {
+    Alert,
+    Badge,
+    Button,
+    Card,
+    CodeBlock,
+    EmptyState,
+    Heading,
+    KeyValue,
+    LiveValue,
+    Markdown,
+    Panel,
+    Row,
+    Sparkline,
+    Stat,
+    Table,
+    Text,
+} from "dimos-react"
+import { openApp } from "./dim-app/source/desktop.js"
+import { formatBytes, getJson, type Topic } from "./desktop.ts"
 import { useJson, useLive } from "./live.ts"
-import { EmptyState } from "./dim-app/source/react.js"
-import { Arrow, Doc, Live, Notice, Sparkline } from "./ui.tsx"
+import { Arrow, Doc } from "./ui.tsx"
 
 type Sample = {
     topic: string
@@ -32,6 +50,10 @@ type Status = {
 
 const KEY_EXAMPLE = "/odom  →  dimos/odom/nav_msgs.Odometry\n/cmd_vel  →  dimos/cmd_vel/geometry_msgs.Twist"
 
+const launcher = (
+    <Button variant="primary" onClick={() => openApp("launcher", { kind: "blueprint" })}>Open the Launcher</Button>
+)
+
 export function ZenohSection() {
     const { rates, ratesError } = useLive()
     const topics = useJson<{ topics: { topic: string; type: string; key: string }[] }>("/api/topics")
@@ -43,244 +65,155 @@ export function ZenohSection() {
     const bps = list.reduce((sum, t) => sum + t.bps, 0)
     const pick = list.find((t) => t.topic === selected)
     return (
-        <div className="zenoh">
-            <div className="intro">
-                <p>
-                    A running blueprint's modules talk over{" "}
-                    <b>zenoh</b>, a pub/sub network. Desktop joins it as a peer and embeds{" "}
-                    <b>zenoh-gateway</b>, which carries topics to browser pages. Everything below is live: rates are
-                    counted by Desktop's subscriber on{" "}
-                    <code>dimos/**</code>, which this page keeps awake by asking every second (it stops 20 s after the
-                    last ask).
-                </p>
-            </div>
-            <div className="totals">
-                <div className="total">
-                    <span className="dim-label">zenoh-gateway</span>
-                    <span className={`dim-badge ${rates?.up ? "ok" : "danger"}`}>
-                        {rates ? (rates.up ? "up" : "down") : "…"}
-                    </span>
-                    <span className="dim-muted small">
-                        {status.data
+        <>
+            <Card>
+                <Markdown text="A running blueprint's modules talk over **zenoh**, a pub/sub network. Desktop joins it as a peer and embeds **zenoh-gateway**, which carries topics to browser pages. Everything below is live: rates are counted by Desktop's subscriber on `dimos/**`, which this page keeps awake by asking every second (it stops 20 s after the last ask)." />
+            </Card>
+            <div className="ee-grid ee-grid--stats">
+                <Card>
+                    <Stat
+                        label="zenoh-gateway"
+                        value={
+                            <Badge tone={rates?.up ? "ok" : "danger"}>
+                                {rates ? (rates.up ? "up" : "down") : "…"}
+                            </Badge>
+                        }
+                        hint={status.data
                             ? `v${status.data.version ?? "?"} · ${status.data.encoder ?? "no encoder yet"}`
                             : status.error
                             ? "status unavailable"
                             : ""}
-                    </span>
-                </div>
-                <div className="total">
-                    <span className="dim-label">topics publishing</span>
-                    <span className="big">{list.length}</span>
-                </div>
-                <div className="total">
-                    <span className="dim-label">messages / s</span>
-                    <Live value={Math.round(total)} className="big" />
-                </div>
-                <div className="total">
-                    <span className="dim-label">bandwidth</span>
-                    <span className="big small-big">{formatBytes(bps)}/s</span>
-                </div>
-            </div>
-            {ratesError && <Notice kind="warn">/api/topics/rates: {ratesError}</Notice>}
-            {rates && !rates.up && (
-                <div className="onboard">
-                    <EmptyState
-                        testId="onboard-link-lost"
-                        label="zenoh-gateway down"
-                        tone="warn"
-                        title="Desktop's zenoh-gateway isn't up, so there are no topics"
-                        body="It's what brings robot topics to browser pages. Turn it on or check it in Settings → zenoh-gateway."
-                        actions={[{ label: "Open Settings", app: "settings" }]}
                     />
-                </div>
+                </Card>
+                <Card>
+                    <Stat label="topics publishing" value={list.length} />
+                </Card>
+                <Card>
+                    <Stat label="messages / s" value={<LiveValue value={Math.round(total)} />} />
+                </Card>
+                <Card>
+                    <Stat label="bandwidth" value={`${formatBytes(bps)}/s`} />
+                </Card>
+            </div>
+            {ratesError && <Alert tone="warn">/api/topics/rates: {ratesError}</Alert>}
+            {rates && !rates.up && (
+                <EmptyState
+                    data-testid="onboard-link-lost"
+                    icon="warn"
+                    tone="warn"
+                    title="Desktop's zenoh-gateway isn't up, so there are no topics"
+                    message="It's what brings robot topics to browser pages. Turn it on or check it in Settings → zenoh-gateway."
+                    actions={<Button onClick={() => openApp("settings")}>Open Settings</Button>}
+                />
             )}
             {rates?.up && !list.length && (
-                <div className="onboard">
-                    <EmptyState
-                        testId="onboard-no-topics"
-                        label="No topics"
-                        title="No topic is publishing"
-                        body="Start a blueprint (or a replay, no robot needed) and its topics appear here with live rates."
-                        actions={[{ label: "Open the Launcher", app: "launcher", params: { kind: "blueprint" } }]}
-                    />
-                </div>
+                <EmptyState
+                    data-testid="onboard-no-topics"
+                    icon="signal"
+                    title="No topic is publishing"
+                    message="Start a blueprint (or a replay, no robot needed) and its topics appear here with live rates."
+                    actions={launcher}
+                />
             )}
-            <div className="zenoh-grid">
-                <div className="dim-card topics-card">
-                    <table className="dim-table compact topics">
-                        <thead>
-                            <tr>
-                                <th>topic</th>
-                                <th>type</th>
-                                <th className="num">Hz</th>
-                                <th className="num">bandwidth</th>
-                                <th>last 32 s</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {list.map((t) => (
-                                <tr
-                                    key={t.topic}
-                                    className={`clickable ${selected === t.topic ? "on" : ""}`}
-                                    onClick={() => setSelected(t.topic)}
-                                >
-                                    <td className="dim-mono">
-                                        {t.topic}
-                                        <div className="dim-muted tiny">
-                                            {keys.get(t.topic) ?? `dimos${t.topic}/${t.type}`}
-                                        </div>
-                                    </td>
-                                    <td className="dim-mono small">{t.type}</td>
-                                    <td className="num">
-                                        <Live value={t.hz} format={(n) => n.toFixed(1)} />
-                                    </td>
-                                    <td className="num">{formatBytes(t.bps)}/s</td>
-                                    <td>
-                                        <Sparkline values={t.history} width={110} className="violet" />
-                                    </td>
-                                </tr>
-                            ))}
-                            {!list.length && (
-                                <tr>
-                                    <td colSpan={5} className="dim-muted">
-                                        No topic is publishing. Start a blueprint (or a replay) and they appear here.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+            <div className="ee-grid ee-grid--wide">
+                <Card padded={false}>
+                    <Table
+                        compact
+                        rows={list}
+                        rowKey="topic"
+                        selected={selected}
+                        onRowClick={(t: Topic) => setSelected(t.topic)}
+                        empty="No topic is publishing. Start a blueprint (or a replay) and they appear here."
+                        columns={[
+                            {
+                                key: "topic",
+                                label: "topic",
+                                render: (t: Topic) => (
+                                    <>
+                                        <Text mono>{t.topic}</Text>
+                                        <br />
+                                        <Text mono small muted>{keys.get(t.topic) ?? `dimos${t.topic}/${t.type}`}</Text>
+                                    </>
+                                ),
+                            },
+                            { key: "type", label: "type", render: (t: Topic) => <Text mono small>{t.type}</Text> },
+                            {
+                                key: "hz",
+                                label: "Hz",
+                                align: "right",
+                                render: (t: Topic) => <LiveValue value={t.hz} format={(n: number) => n.toFixed(1)} />,
+                            },
+                            {
+                                key: "bps",
+                                label: "bandwidth",
+                                align: "right",
+                                render: (t: Topic) => `${formatBytes(t.bps)}/s`,
+                            },
+                            {
+                                key: "history",
+                                label: "last 32 s",
+                                sort: false,
+                                render: (t: Topic) => (
+                                    <Sparkline values={t.history ?? []} width={110} color="var(--accent-alt)" />
+                                ),
+                            },
+                        ]}
+                    />
+                </Card>
                 <SamplePanel topic={pick?.topic ?? null} type={pick?.type} />
             </div>
-            <h3 className="docs-h">How it works</h3>
-            <div className="docs-grid">
+            <Heading level={2}>How it works</Heading>
+            <div className="ee-grid ee-grid--wide">
                 <Doc title="How a Desktop page gets topic data" open>
                     <PathDiagram />
-                    <ul>
-                        <li>
-                            <b>Live streams (apps):</b>{" "}
-                            the page imports zenoh-gateway's JS client and connects to its own Desktop:{" "}
-                            <code>connect(new URL("../../zenoh-gateway", location.href).href)</code>, then{" "}
-                            <code>subscribe</code>, <code>publisher</code>, <code>listTopics</code>, <code>get</code>,
-                            {" "}
-                            <code>lease</code>. Data arrives over WebRTC.
-                        </li>
-                        <li>
-                            <b>Quick looks (this page, the HUD, the agent):</b> plain HTTP. <code>/api/topics</code>
-                            {" "}
-                            lists, <code>/api/topics/rates</code> counts, <code>/api/topics/sample</code>{" "}
-                            returns the next message. The MCP tools <code>list_topics</code> / <code>sample_topic</code>
-                            {" "}
-                            are the same code.
-                        </li>
-                        <li>
-                            <b>App backends</b> get <code>zenohGatewayUrl</code> and <code>zenohConnect</code> in the
-                            {" "}
-                            <code>DIMOS_APP</code> env var to reach the same data.
-                        </li>
-                    </ul>
+                    <Markdown
+                        text={[
+                            '- **Live streams (apps):** the page imports zenoh-gateway\'s JS client and connects to its own Desktop: `connect(new URL("../../zenoh-gateway", location.href).href)`, then `subscribe`, `publisher`, `listTopics`, `get`, `lease`. Data arrives over WebRTC.',
+                            "- **Quick looks (this page, the HUD, the agent):** plain HTTP. `/api/topics` lists, `/api/topics/rates` counts, `/api/topics/sample` returns the next message. The MCP tools `list_topics` / `sample_topic` are the same code.",
+                            "- **App backends** get `zenohGatewayUrl` and `zenohConnect` in the `DIMOS_APP` env var to reach the same data.",
+                        ].join("\n")}
+                    />
                 </Doc>
                 <Doc title="Keys: how /odom becomes a zenoh key" open>
-                    <p>
-                        dimos strips the leading <code>/</code>, prefixes <code>dimos/</code>{" "}
-                        and appends the message type:
-                    </p>
-                    <pre className="code-block">{KEY_EXAMPLE}</pre>
-                    <p>
-                        The type travels <em>only</em>{" "}
-                        in that last segment: no encoding field, no attachment. Desktop discovers topics by subscribing
-                        to <code>dimos/**</code>{" "}
-                        plus liveliness queries, listening for about 1.2 s, and keeping keys shaped{" "}
-                        <code>dimos/…/pkg.Type</code>. RPC uses queryables on <code>dimos/rpc/&lt;name&gt;</code>.
-                    </p>
+                    <Markdown text="dimos strips the leading `/`, prefixes `dimos/` and appends the message type:" />
+                    <CodeBlock code={KEY_EXAMPLE} language="text" copy={false} />
+                    <Markdown text="The type travels *only* in that last segment: no encoding field, no attachment. Desktop discovers topics by subscribing to `dimos/**` plus liveliness queries, listening for about 1.2 s, and keeping keys shaped `dimos/…/pkg.Type`. RPC uses queryables on `dimos/rpc/<name>`." />
                 </Doc>
                 <Doc title="Encodings: what the bytes are" open>
-                    <ul>
-                        <li>
-                            On the wire: <b>LCM</b> (big-endian, packed, an 8-byte type fingerprint first), from{" "}
-                            <code>msg.lcm_encode()</code>. Types without an LCM encoder go out pickled.
-                        </li>
-                        <li>
-                            <code>/api/topics/sample</code> decodes three: <code>sensor_msgs.Image</code>{" "}
-                            (rgb8, bgr8, rgba8, bgra8, mono8 → JPEG q85), <code>CompressedImage</code>{" "}
-                            (passed through), and <code>PointCloud2</code>{" "}
-                            (float32 x/y/z → count, bounds, centroid, ≤ 200 sample points). Anything else: the raw size
-                            and a note.
-                        </li>
-                        <li>
-                            zenoh-gateway's encodings (<code>dimos_lcm_*</code>, <code>ros2_*</code>) turn images into
-                            {" "}
-                            <b>H.264 video</b>{" "}
-                            and depth / point clouds into zstd-compressed fields (clouds thinned and quantized to
-                            int16), so a browser can keep up.
-                        </li>
-                    </ul>
+                    <Markdown
+                        text={[
+                            "- On the wire: **LCM** (big-endian, packed, an 8-byte type fingerprint first), from `msg.lcm_encode()`. Types without an LCM encoder go out pickled.",
+                            "- `/api/topics/sample` decodes three: `sensor_msgs.Image` (rgb8, bgr8, rgba8, bgra8, mono8 → JPEG q85), `CompressedImage` (passed through), and `PointCloud2` (float32 x/y/z → count, bounds, centroid, ≤ 200 sample points). Anything else: the raw size and a note.",
+                            "- zenoh-gateway's encodings (`dimos_lcm_*`, `ros2_*`) turn images into **H.264 video** and depth / point clouds into zstd-compressed fields (clouds thinned and quantized to int16), so a browser can keep up.",
+                        ].join("\n")}
+                    />
                 </Doc>
                 <Doc title="Leases and liveliness" open>
-                    <ul>
-                        <li>
-                            <b>Liveliness:</b>{" "}
-                            Desktop queries liveliness tokens when it discovers topics, but dimos declares none today,
-                            so a topic shows up only while it publishes. In the rates, a quiet topic reads 0 Hz and
-                            disappears after 5 s of zeros.
-                        </li>
-                        <li>
-                            <b>zenoh-gateway leases</b>{" "}
-                            are a gateway feature: one browser client's exclusive right to publish on a group of keys
-                            (e.g. one driver for <code>cmd_vel</code>). Desktop defines no lease groups.
-                        </li>
-                        <li>
-                            <b>Deadmen:</b>{" "}
-                            a publisher arms a message ahead of time (say, a zero velocity); the gateway sends it if
-                            that client misses heartbeats, disconnects (15 s grace) or the gateway stops.
-                        </li>
-                    </ul>
+                    <Markdown
+                        text={[
+                            "- **Liveliness:** Desktop queries liveliness tokens when it discovers topics, but dimos declares none today, so a topic shows up only while it publishes. In the rates, a quiet topic reads 0 Hz and disappears after 5 s of zeros.",
+                            "- **zenoh-gateway leases** are a gateway feature: one browser client's exclusive right to publish on a group of keys (e.g. one driver for `cmd_vel`). Desktop defines no lease groups.",
+                            "- **Deadmen:** a publisher arms a message ahead of time (say, a zero velocity); the gateway sends it if that client misses heartbeats, disconnects (15 s grace) or the gateway stops.",
+                        ].join("\n")}
+                    />
                 </Doc>
                 <Doc title="ACL: who may publish" open>
-                    <p>
-                        No zenoh <code>access_control</code>{" "}
-                        is configured in Desktop or dimos. zenoh-gateway would honor one from a zenoh config, and has an
-                        {" "}
-                        <code>authorize</code> hook (none set, so every client may do everything). What guards{" "}
-                        <code>/zenoh-gateway</code>{" "}
-                        is Desktop's own HTTP auth: loopback is trusted, other machines need the network-access
-                        password.
-                    </p>
+                    <Markdown text="No zenoh `access_control` is configured in Desktop or dimos. zenoh-gateway would honor one from a zenoh config, and has an `authorize` hook (none set, so every client may do everything). What guards `/zenoh-gateway` is Desktop's own HTTP auth: loopback is trusted, other machines need the network-access password." />
                 </Doc>
                 <Doc title="WebRTC" open>
-                    <p>
-                        zenoh-gateway <em>is</em>{" "}
-                        the WebRTC path: each subscription or publisher is a data channel, images are H.264 video
-                        tracks. Signaling is one non-trickle <code>POST …/zenoh-gateway/offer</code>; there are also
-                        {" "}
-                        <code>/zenoh-gateway/ice</code> and{" "}
-                        <code>/zenoh-gateway/health</code>. The encoder is VideoToolbox, then GStreamer hardware, then
-                        openh264 (Settings: hardware encode off forces software). dimos's separate{" "}
-                        <code>WebRTCPubSub</code> is unrelated.
-                    </p>
+                    <Markdown text="zenoh-gateway *is* the WebRTC path: each subscription or publisher is a data channel, images are H.264 video tracks. Signaling is one non-trickle `POST …/zenoh-gateway/offer`; there are also `/zenoh-gateway/ice` and `/zenoh-gateway/health`. The encoder is VideoToolbox, then GStreamer hardware, then openh264 (Settings: hardware encode off forces software). dimos's separate `WebRTCPubSub` is unrelated." />
                 </Doc>
                 <Doc title="Relays, routers and other machines" open>
-                    <ul>
-                        <li>
-                            dimos defaults to{" "}
-                            <code>zenoh_mode: peer</code>, scouting off (multicast stays on loopback), and connects to
-                            {" "}
-                            <code>tcp/&lt;robot_ip&gt;:7447</code>{" "}
-                            for each robot IP, because many access points filter multicast.
-                        </li>
-                        <li>
-                            Desktop's session is zenoh's default (a peer with multicast scouting) plus{" "}
-                            <code>zenoh_gateway.connect</code> if set; the HUD shows "peer" or that endpoint.
-                        </li>
-                        <li>
-                            No <code>zenohd</code>{" "}
-                            router ships with either. Client mode keeps one link; router mode needs an explicit listen
-                            endpoint.
-                        </li>
-                    </ul>
+                    <Markdown
+                        text={[
+                            "- dimos defaults to `zenoh_mode: peer`, scouting off (multicast stays on loopback), and connects to `tcp/<robot_ip>:7447` for each robot IP, because many access points filter multicast.",
+                            "- Desktop's session is zenoh's default (a peer with multicast scouting) plus `zenoh_gateway.connect` if set; the HUD shows \"peer\" or that endpoint.",
+                            "- No `zenohd` router ships with either. Client mode keeps one link; router mode needs an explicit listen endpoint.",
+                        ].join("\n")}
+                    />
                 </Doc>
             </div>
-        </div>
+        </>
     )
 }
 
@@ -317,56 +250,64 @@ function SamplePanel({ topic, type }: { topic: string | null; type?: string }) {
         )
         : []
     return (
-        <div className="dim-card sample">
-            <div className="sample-head">
-                <h3>Example payload</h3>
-                <button type="button" className="dim-btn sm" disabled={!topic || busy} onClick={take}>
+        <Card
+            title="Example payload"
+            actions={
+                <Button size="sm" icon="refresh" disabled={!topic} loading={busy} onClick={take}>
                     {busy ? "Waiting for the next message…" : "Sample again"}
-                </button>
-            </div>
+                </Button>
+            }
+        >
             {!topic && (
-                <p className="dim-muted">
+                <Text as="p" muted>
                     Pick a topic: Desktop subscribes to its key and returns the very next message (no replay of old
                     ones).
-                </p>
+                </Text>
             )}
-            {error && <Notice kind="warn">{error}</Notice>}
+            {error && <Alert tone="warn">{error}</Alert>}
             {sample && (
                 <>
-                    <div className="kv">
-                        <span className="k">key</span>
-                        <code>{sample.key}</code>
-                        <span className="k">type</span>
-                        <code>{sample.type}</code>
-                        <span className="k">size</span>
-                        <span>{formatBytes(sample.bytes)} on the wire</span>
-                        {fields.flatMap(([k, v]) => [
-                            <span key={`k-${k}`} className="k">{k}</span>,
-                            <code key={`v-${k}`}>{typeof v === "object" ? JSON.stringify(v) : String(v)}</code>,
-                        ])}
-                    </div>
+                    <KeyValue
+                        items={[
+                            ["key", sample.key],
+                            ["type", sample.type],
+                            ["size", `${formatBytes(sample.bytes)} on the wire`],
+                            ...fields.map(([k, v]) => [k, typeof v === "object" ? JSON.stringify(v) : String(v)]),
+                        ]}
+                    />
                     {sample.image && (
                         <img
-                            className="sample-img"
+                            className="ee-sample-img"
                             src={`data:${sample.image.mimeType};base64,${sample.image.data}`}
                             alt={sample.topic}
                         />
                     )}
                     {sample.cloud && <CloudView cloud={sample.cloud} />}
-                    {sample.note && <p className="dim-muted small">{sample.note}</p>}
-                    <details>
-                        <summary className="small">raw JSON</summary>
-                        <pre className="code-block">
-                            {JSON.stringify(
-                                { ...sample, image: sample.image ? { ...sample.image, data: `${sample.image.data.slice(0, 40)}… (${sample.image.data.length} chars)` } : undefined },
+                    {sample.note && <Text as="p" small muted>{sample.note}</Text>}
+                    <Panel title="raw JSON" collapsible defaultOpen={false}>
+                        <CodeBlock
+                            language="json"
+                            maxHeight={360}
+                            code={JSON.stringify(
+                                {
+                                    ...sample,
+                                    image: sample.image
+                                        ? {
+                                            ...sample.image,
+                                            data: `${
+                                                sample.image.data.slice(0, 40)
+                                            }… (${sample.image.data.length} chars)`,
+                                        }
+                                        : undefined,
+                                },
                                 null,
                                 2,
                             )}
-                        </pre>
-                    </details>
+                        />
+                    </Panel>
                 </>
             )}
-        </div>
+        </Card>
     )
 }
 
@@ -380,25 +321,24 @@ function CloudView({ cloud }: { cloud: NonNullable<Sample["cloud"]> }) {
     const py = (y: number) => S - 10 - ((y - minY) / span) * (S - 20)
     const fmt = (v: number[]) => `[${v.map((n) => n.toFixed(2)).join(", ")}]`
     return (
-        <div className="cloud">
-            <svg width={S} height={S} viewBox={`0 0 ${S} ${S}`} className="cloud-svg">
-                <rect x={0.5} y={0.5} width={S - 1} height={S - 1} rx={8} />
-                {cloud.sample.map(([x, y], i) => <circle key={i} cx={px(x)} cy={py(y)} r={1.8} />)}
-                <circle className="centroid" cx={px(cloud.centroid[0])} cy={py(cloud.centroid[1])} r={4} />
+        <Row gap={14} align="start" wrap>
+            <svg width={S} height={S} viewBox={`0 0 ${S} ${S}`}>
+                <rect className="cloud-frame" x={0.5} y={0.5} width={S - 1} height={S - 1} rx={8} />
+                {cloud.sample.map(([x, y], i) => (
+                    <circle key={i} className="cloud-point" cx={px(x)} cy={py(y)} r={1.8} />
+                ))}
+                <circle className="cloud-centroid" cx={px(cloud.centroid[0])} cy={py(cloud.centroid[1])} r={4} />
             </svg>
-            <div className="kv">
-                <span className="k">points</span>
-                <span>{cloud.count.toLocaleString()}</span>
-                <span className="k">min</span>
-                <code>{fmt(cloud.min)}</code>
-                <span className="k">max</span>
-                <code>{fmt(cloud.max)}</code>
-                <span className="k">centroid</span>
-                <code>{fmt(cloud.centroid)}</code>
-                <span className="k">shown</span>
-                <span>{cloud.sample.length} sample points, top-down</span>
-            </div>
-        </div>
+            <KeyValue
+                items={[
+                    ["points", cloud.count.toLocaleString()],
+                    ["min", fmt(cloud.min)],
+                    ["max", fmt(cloud.max)],
+                    ["centroid", fmt(cloud.centroid)],
+                    ["shown", `${cloud.sample.length} sample points, top-down`],
+                ]}
+            />
+        </Row>
     )
 }
 
@@ -411,7 +351,7 @@ function PathDiagram() {
         </g>
     )
     return (
-        <svg className="diagram" viewBox="0 0 470 160">
+        <svg className="ee-diagram" viewBox="0 0 470 160">
             <Arrow />
             {box(0, 58, 92, "module", "publishes LCM", "zenoh")}
             {box(122, 58, 96, "zenoh", "dimos/odom/…", "zenoh")}

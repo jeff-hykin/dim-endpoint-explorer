@@ -1,10 +1,29 @@
 // The Desktop, dimos server and agent gateway sections: each is its OpenAPI document (ApiSection) plus the live state
 // and docs that belong to it.
 import { useEffect, useState } from "react"
+import {
+    Alert,
+    Badge,
+    Button,
+    Card,
+    CodeBlock,
+    LiveValue,
+    Markdown,
+    Panel,
+    Row,
+    Stat,
+    Stepper,
+    Text,
+} from "dimos-react"
 import { ApiSection } from "./ApiSection.tsx"
 import { countsFor, getJson, type McpTool, mcpTools, type OpenApi, type Runs } from "./desktop.ts"
 import { useJson, useLive } from "./live.ts"
-import { Live, Notice } from "./ui.tsx"
+import { ParamTable } from "./ui.tsx"
+
+const DOC_1 =
+    'Desktop is one Rust process. It serves the shell, every app\'s page and these endpoints on one origin, so any page can `fetch("/api/…")` without CORS. Its own manifest, the same `dimos.yaml` shape every app has, lists them for the agent.'
+const DOC_2 =
+    'Each change is a `{type:"dimos", event:{type:"launch"}}` event, and `{type:"runs"}` when a run starts or stops, so this card updates itself.'
 
 export function DesktopSection() {
     const doc = useJson<OpenApi>("/api/desktop/openapi", ["apps"])
@@ -26,27 +45,30 @@ export function DesktopSection() {
             docFamily="desktop"
             source="/api/desktop/openapi"
             aside={
-                <div className="intro">
-                    <p>
-                        Desktop is one Rust process. It serves the shell, every app's page and these endpoints on one
-                        origin, so any page can <code>fetch("/api/…")</code> without CORS. Its own manifest, the same
-                        {" "}
-                        <code>dimos.yaml</code> shape every app has, lists them for the agent.
-                    </p>
-                    <div className="row-gap">
-                        <a className="dim-btn sm" href="/api/desktop/dimos.yaml" target="_blank" rel="noreferrer">
-                            Desktop's dimos.yaml ↗
-                        </a>
-                        <button type="button" className="dim-btn sm ghost" onClick={() => setShowYaml(!showYaml)}>
+                <Card>
+                    <Markdown
+                        text={DOC_1}
+                    />
+                    <Row gap={8} wrap>
+                        <Button
+                            size="sm"
+                            iconRight="external"
+                            onClick={() => open("/api/desktop/dimos.yaml", "_blank", "noreferrer")}
+                        >
+                            Desktop's dimos.yaml
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setShowYaml(!showYaml)}>
                             {showYaml ? "Hide" : "Show"} it here
-                        </button>
-                    </div>
-                    {showYaml && <pre className="code-block yaml">{yaml ?? "loading…"}</pre>}
-                </div>
+                        </Button>
+                    </Row>
+                    {showYaml && <CodeBlock code={yaml ?? "loading…"} language="yaml" maxHeight={480} />}
+                </Card>
             }
         />
     )
 }
+
+const PHASE_TONES: Record<string, string> = { running: "ok", failed: "danger" }
 
 export function DimosSection() {
     const doc = useJson<OpenApi>("/api/desktop/openapi")
@@ -63,57 +85,38 @@ export function DimosSection() {
             source="/api/desktop/openapi"
             aside={
                 <>
-                    <div className="intro">
-                        <p>
-                            The dimos server is its own process on a unix socket, started on demand by Desktop, which
-                            proxies <code>/dimos/…</code>{" "}
-                            to it. It is the only part that depends on the dimos version: it reads the checkout's
-                            blueprints, launches runs and reads their logs.
-                        </p>
-                    </div>
-                    <div className="state-cards">
-                        <div className="dim-card state">
-                            <span className="dim-label">running blueprint</span>
-                            <span className="big small-big">
-                                {launch?.blueprint ?? runs.data?.runs?.[0]?.blueprint ?? "none"}
-                            </span>
-                            <span
-                                className={`dim-badge ${
-                                    launch?.phase === "running"
-                                        ? "ok"
-                                        : launch?.phase === "failed"
-                                        ? "danger"
-                                        : launch
-                                        ? "warn"
-                                        : ""
-                                }`}
-                            >
+                    <Card>
+                        <Markdown text="The dimos server is its own process on a unix socket, started on demand by Desktop, which proxies `/dimos/…` to it. It is the only part that depends on the dimos version: it reads the checkout's blueprints, launches runs and reads their logs." />
+                    </Card>
+                    <div className="ee-grid">
+                        <Card>
+                            <Stat
+                                label="running blueprint"
+                                value={launch?.blueprint ?? runs.data?.runs?.[0]?.blueprint ?? "none"}
+                                hint={`refreshed by: ${runs.refreshedBy ?? "first load"}`}
+                            />
+                            <Badge tone={launch ? PHASE_TONES[launch.phase] ?? "warn" : "default"}>
                                 {launch?.phase ??
                                     (runs.data?.runs?.length ? "running (from a terminal)" : "nothing running")}
-                            </span>
-                            {launch?.error && <span className="danger-text small">{launch.error}</span>}
-                            <span className="dim-muted small">refreshed by: {runs.refreshedBy ?? "first load"}</span>
-                        </div>
-                        <div className="dim-card state">
-                            <span className="dim-label">blueprints</span>
-                            <span className="big">
-                                <Live value={list.length} />
-                            </span>
-                            <span className="dim-muted small">
-                                {list.filter((b) => b.kind === "builtin").length} builtin ·{" "}
-                                {list.filter((b) => b.kind !== "builtin").length} external
-                            </span>
-                            <span className="dim-muted small">
-                                refreshed by: {blueprints.refreshedBy ?? "first load"}
-                            </span>
-                        </div>
-                        <div className="dim-card state">
-                            <span className="dim-label">runs (registry)</span>
-                            <span className="big">{runs.data?.runs?.length ?? 0}</span>
-                            <span className="dim-muted small">
-                                {runs.data?.runs?.map((r) => r.runId).join(", ") || "—"}
-                            </span>
-                        </div>
+                            </Badge>
+                            {launch?.error && <Text small tone="danger">{launch.error}</Text>}
+                        </Card>
+                        <Card>
+                            <Stat
+                                label="blueprints"
+                                value={<LiveValue value={list.length} />}
+                                hint={`${list.filter((b) => b.kind === "builtin").length} builtin · ${
+                                    list.filter((b) => b.kind !== "builtin").length
+                                } external · refreshed by: ${blueprints.refreshedBy ?? "first load"}`}
+                            />
+                        </Card>
+                        <Card>
+                            <Stat
+                                label="runs (registry)"
+                                value={runs.data?.runs?.length ?? 0}
+                                hint={runs.data?.runs?.map((r) => r.runId).join(", ") || "—"}
+                            />
+                        </Card>
                     </div>
                     <LaunchPhases phase={launch?.phase} />
                 </>
@@ -124,24 +127,21 @@ export function DimosSection() {
 
 function LaunchPhases({ phase }: { phase?: string }) {
     const steps = ["starting", "running", "stopped"]
+    const current = phase === "failed" ? 1 : Math.max(0, steps.indexOf(phase ?? ""))
     return (
-        <div className="phases dim-card">
-            <span className="dim-label">a launch's phases</span>
-            <div className="phase-row">
-                {steps.map((step, i) => (
-                    <span key={step} className="phase-wrap">
-                        <span className={`phase ${phase === step ? "on" : ""}`}>{step}</span>
-                        {i < steps.length - 1 && <span className="phase-arrow">→</span>}
-                    </span>
-                ))}
-                <span className="phase-or">or</span>
-                <span className={`phase fail ${phase === "failed" ? "on" : ""}`}>failed</span>
-            </div>
-            <span className="dim-muted small">
-                Each change is a <code>{`{type:"dimos", event:{type:"launch"}}`}</code> event, and{" "}
-                <code>{`{type:"runs"}`}</code> when a run starts or stops, so this card updates itself.
-            </span>
-        </div>
+        <Card title="A launch's phases">
+            <Row gap={12} wrap>
+                <Stepper
+                    steps={steps.map((label) => ({ label }))}
+                    current={phase && phase !== "failed" ? current : -1}
+                />
+                <Text muted small>or</Text>
+                <Badge tone={phase === "failed" ? "danger" : "default"} solid={phase === "failed"}>failed</Badge>
+            </Row>
+            <Markdown
+                text={DOC_2}
+            />
+        </Card>
     )
 }
 
@@ -163,51 +163,44 @@ export function AgentSection({ focus }: { focus?: string }) {
     }, [focus, tools])
     const mcp = countsFor(live.stats, "desktop", "POST", "/mcp")
     const mcpPanel = (
-        <div id="mcp-tools" className="dim-card mcp">
-            <div className="mcp-head">
-                <h3>Desktop MCP tools</h3>
-                <span className="dim-muted small">
-                    <code>POST /mcp</code> · <Live value={mcp.calls} /> calls · {mcp.errors} errors
-                </span>
-            </div>
-            <p className="small">
-                The agent doesn't call Desktop's HTTP API directly: it speaks MCP to{" "}
-                <code>/mcp</code>, and these tools search the endpoint registry, then call an endpoint for it (<code>
-                    call_endpoint
-                </code>). So an app's <code>dimos.yaml</code> endpoints become things the agent can do.
-            </p>
-            {toolsError && <Notice kind="warn">tools/list failed: {toolsError}</Notice>}
-            <div className="tools">
-                {(tools ?? []).map((tool) => (
-                    <details key={tool.name} className="tool">
-                        <summary>
-                            <code>{tool.name}</code>
-                            <span className="dim-muted">{tool.description?.split(/(?<=\.)\s/)[0]}</span>
-                        </summary>
-                        <p className="small">{tool.description}</p>
-                        {tool.inputSchema?.properties && (
-                            <table className="dim-table compact">
-                                <tbody>
-                                    {Object.entries(tool.inputSchema.properties).map(([name, p]) => (
-                                        <tr key={name}>
-                                            <td className="dim-mono">
-                                                {name}
-                                                {tool.inputSchema?.required?.includes(name)
-                                                    ? <span className="req">*</span>
-                                                    : null}
-                                            </td>
-                                            <td className="dim-mono">{p.type}</td>
-                                            <td>{p.description}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        )}
-                    </details>
-                ))}
-                {tools === null && !toolsError && <span className="dim-muted">asking /mcp for tools/list…</span>}
-            </div>
-        </div>
+        <Card
+            id="mcp-tools"
+            title="Desktop MCP tools"
+            actions={
+                <Text small muted>
+                    <Text mono>POST /mcp</Text> · <LiveValue value={mcp.calls} /> calls · {mcp.errors} errors
+                </Text>
+            }
+        >
+            <Markdown text="The agent doesn't call Desktop's HTTP API directly: it speaks MCP to `/mcp`, and these tools search the endpoint registry, then call an endpoint for it (`call_endpoint`). So an app's `dimos.yaml` endpoints become things the agent can do." />
+            {toolsError && <Alert tone="warn">tools/list failed: {toolsError}</Alert>}
+            {(tools ?? []).map((tool) => (
+                <Panel
+                    key={tool.name}
+                    collapsible
+                    defaultOpen={false}
+                    title={
+                        <Row gap={10}>
+                            <Text mono>{tool.name}</Text>
+                            <Text muted small>{tool.description?.split(/(?<=\.)\s/)[0]}</Text>
+                        </Row>
+                    }
+                >
+                    <Text as="p" small>{tool.description}</Text>
+                    {tool.inputSchema?.properties && (
+                        <ParamTable
+                            rows={Object.entries(tool.inputSchema.properties).map(([name, p]) => ({
+                                name,
+                                type: p.type,
+                                description: p.description,
+                                required: tool.inputSchema?.required?.includes(name),
+                            }))}
+                        />
+                    )}
+                </Panel>
+            ))}
+            {tools === null && !toolsError && <Text muted>asking /mcp for tools/list…</Text>}
+        </Card>
     )
     return (
         <ApiSection
@@ -218,14 +211,9 @@ export function AgentSection({ focus }: { focus?: string }) {
             source="/agent/api/openapi"
             aside={
                 <>
-                    <div className="intro">
-                        <p>
-                            The agent gateway (dimcode) is a separate server; Desktop proxies <code>/agent/…</code>{" "}
-                            to it, so <code>/agent/api/settings</code> here is <code>/api/settings</code>{" "}
-                            there. It owns chat sessions, the model and keys, and the portal page; for anything on the
-                            robot it goes back through Desktop's MCP.
-                        </p>
-                    </div>
+                    <Card>
+                        <Markdown text="The agent gateway (dimcode) is a separate server; Desktop proxies `/agent/…` to it, so `/agent/api/settings` here is `/api/settings` there. It owns chat sessions, the model and keys, and the portal page; for anything on the robot it goes back through Desktop's MCP." />
+                    </Card>
                     {mcpPanel}
                 </>
             }

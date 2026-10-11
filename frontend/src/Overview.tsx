@@ -1,11 +1,24 @@
 // Overview: the system as one picture. Every box is a real piece of the running system; every line carries live
 // traffic: calls/s from Desktop's call counts, messages/s from zenoh-gateway's topic rates, events/s seen by this page.
+import {
+    Badge,
+    Button,
+    Card,
+    EmptyState,
+    LiveValue,
+    LogView,
+    Markdown,
+    Row,
+    Sparkline,
+    Stat,
+    Table,
+    Text,
+} from "dimos-react"
+import { openApp } from "./dim-app/source/desktop.js"
 import { familyRate, formatRate, type RegistryApp, type Runs } from "./desktop.ts"
 import { curve, FlowEdge } from "./flow.tsx"
-import { useJson, useLive } from "./live.ts"
+import { type DesktopEvent, useJson, useLive } from "./live.ts"
 import type { Section } from "./App.tsx"
-import { Live, Sparkline } from "./ui.tsx"
-import { EmptyState } from "./dim-app/source/react.js"
 
 type Box = { x: number; y: number; w: number; h: number }
 const mid = (x1: number, y1: number, x2: number, y2: number): [number, number] => [(x1 + x2) / 2, (y1 + y2) / 2]
@@ -36,6 +49,9 @@ function Node({ box, title, sub, metric, onClick, kind = "", status }: {
         </g>
     )
 }
+
+const DOC_1 =
+    "Nobody polls for \"did something change?\". Desktop publishes its events on zenoh, `<ns>/desktop/events/<type>`, and every page hears them over its one zenoh-gateway connection: `apps`, `endpoints`, `runs`, `blueprints`, `endpoint-stats`… This page listens with the SDK's `onDesktopEvent`, which is how these numbers move. Apps' backends push to their pages the same way, through `POST /desktop/frontend/<app>/<topic>`."
 
 export function Overview({ go }: { go: (section: Section, focus?: string) => void }) {
     const live = useLive()
@@ -80,58 +96,71 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
     const nothingRunning = runs.data && !runs.data.runs?.length &&
         !(launch && (launch.phase === "running" || launch.phase === "starting"))
     return (
-        <div className="overview">
+        <>
             {nothingRunning && (
-                <div className="onboard">
-                    <EmptyState
-                        testId="onboard-no-blueprint"
-                        label="No blueprint running"
-                        title="Nothing is running, so only Desktop's own endpoints are here"
-                        body="Launch a blueprint (or a replay, no robot needed) to see its modules' endpoints and topics light up too."
-                        actions={[{ label: "Open the Launcher", app: "launcher", params: { kind: "blueprint" } }]}
-                    />
-                </div>
+                <EmptyState
+                    data-testid="onboard-no-blueprint"
+                    icon="robot"
+                    title="Nothing is running, so only Desktop's own endpoints are here"
+                    message="Launch a blueprint (or a replay, no robot needed) to see its modules' endpoints and topics light up too."
+                    actions={
+                        <Button variant="primary" onClick={() => openApp("launcher", { kind: "blueprint" })}>
+                            Open the Launcher
+                        </Button>
+                    }
+                />
             )}
-            <div className="totals">
-                <div className="total">
-                    <span className="dim-label">calls / s</span>
-                    <Live value={stats?.totals.perSec ?? 0} format={(n) => formatRate(n, "")} className="big" />
-                    <Sparkline values={live.history.total} width={110} />
-                </div>
-                <div className="total">
-                    <span className="dim-label">calls counted</span>
-                    <Live value={stats?.totals.calls ?? 0} format={(n) => n.toLocaleString()} className="big" />
-                    <span className="dim-muted small">{stats?.totals.errors ?? 0} errors</span>
-                </div>
-                <div className="total">
-                    <span className="dim-label">zenoh msgs / s</span>
-                    <Live value={Math.round(zenohHz)} className="big" />
-                    <Sparkline values={live.history.zenoh} width={110} className="violet" />
-                </div>
-                <div className="total">
-                    <span className="dim-label">topics</span>
-                    <span className="big">{topicCount}</span>
-                    <span className="dim-muted small">
-                        {rates?.up === false ? "zenoh-gateway is down" : "via zenoh-gateway"}
-                    </span>
-                </div>
-                <div className="total">
-                    <span className="dim-label">events / s</span>
-                    <Live value={live.eventsPerSec} className="big" />
-                    <Sparkline values={live.eventHistory} width={110} className="ok" />
-                </div>
-                <div className="total">
-                    <span className="dim-label">blueprint</span>
-                    <span className="big small-big">{launch?.blueprint ?? "none"}</span>
-                    <span className={`dim-badge ${running ? "ok" : launch?.phase === "failed" ? "danger" : ""}`}>
+            <div className="ee-grid ee-grid--stats">
+                <Card>
+                    <Stat
+                        label="calls / s"
+                        value={
+                            <LiveValue
+                                value={stats?.totals.perSec ?? 0}
+                                format={(n: number) => formatRate(n, "")}
+                            />
+                        }
+                    />
+                    <Sparkline values={live.history.total ?? []} width={110} />
+                </Card>
+                <Card>
+                    <Stat
+                        label="calls counted"
+                        value={
+                            <LiveValue
+                                value={stats?.totals.calls ?? 0}
+                                format={(n: number) => n.toLocaleString()}
+                            />
+                        }
+                        hint={`${stats?.totals.errors ?? 0} errors`}
+                    />
+                </Card>
+                <Card>
+                    <Stat label="zenoh msgs / s" value={<LiveValue value={Math.round(zenohHz)} />} />
+                    <Sparkline values={live.history.zenoh ?? []} width={110} color="var(--accent-alt)" />
+                </Card>
+                <Card>
+                    <Stat
+                        label="topics"
+                        value={topicCount}
+                        hint={rates?.up === false ? "zenoh-gateway is down" : "via zenoh-gateway"}
+                    />
+                </Card>
+                <Card>
+                    <Stat label="events / s" value={<LiveValue value={live.eventsPerSec} />} />
+                    <Sparkline values={live.eventHistory} width={110} color="var(--ok)" />
+                </Card>
+                <Card>
+                    <Stat label="blueprint" value={launch?.blueprint ?? "none"} />
+                    <Badge tone={running ? "ok" : launch?.phase === "failed" ? "danger" : "default"}>
                         {launch?.phase ?? "not running"}
-                    </span>
-                </div>
+                    </Badge>
+                </Card>
             </div>
 
-            <div className="map-wrap dim-card">
+            <Card>
                 <svg
-                    className="flowmap"
+                    className="ee-flowmap"
                     viewBox="0 0 1100 650"
                     role="img"
                     aria-label="Data-flow map of the running system"
@@ -296,155 +325,128 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
                     )}
                     <text className="col-label" x={700} y={290}>APP BACKENDS</text>
                 </svg>
-                <div className="legend">
-                    <span>
-                        <i className="sw call" /> HTTP calls/s (Desktop's call counts)
-                    </span>
-                    <span>
-                        <i className="sw event" /> events pushed to pages (seen here)
-                    </span>
-                    <span>
-                        <i className="sw msg" /> zenoh messages/s (zenoh-gateway rates)
-                    </span>
-                    <span className="dim-muted">Click any box to open its section.</span>
-                </div>
-            </div>
+                <Row gap={18} wrap>
+                    <Text small>
+                        <i className="legend-swatch" /> HTTP calls/s (Desktop's call counts)
+                    </Text>
+                    <Text small>
+                        <i className="legend-swatch event" /> events pushed to pages (seen here)
+                    </Text>
+                    <Text small>
+                        <i className="legend-swatch msg" /> zenoh messages/s (zenoh-gateway rates)
+                    </Text>
+                    <Text small muted>Click any box to open its section.</Text>
+                </Row>
+            </Card>
 
-            <div className="teach-grid">
-                <div className="dim-card teach">
-                    <h3>1 · Requests go up</h3>
-                    <p>
-                        Every page is served by Desktop, on one origin. A page just calls a path; Desktop routes it by
-                        prefix and counts it under a <em>family</em>:
-                    </p>
-                    <table className="dim-table compact">
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <code>/api/…</code> <code>/mcp</code>
-                                </td>
-                                <td>desktop</td>
-                                <td>Desktop itself</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <code>/dimos/…</code>
-                                </td>
-                                <td>dimos</td>
-                                <td>the dimos server (unix socket)</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <code>/agent/…</code>
-                                </td>
-                                <td>agent</td>
-                                <td>the dimcode gateway</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <code>/apps/&lt;name&gt;/…</code>
-                                </td>
-                                <td>app:&lt;name&gt;</td>
-                                <td>that app's backend</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div className="dim-card teach">
-                    <h3>2 · Changes come down</h3>
-                    <p>
-                        Nobody polls for "did something change?". Desktop publishes its events on zenoh,{" "}
-                        <code>{"<ns>/desktop/events/<type>"}</code>, and every page hears them over its one
-                        zenoh-gateway connection: <code>apps</code>, <code>endpoints</code>, <code>runs</code>,{" "}
-                        <code>blueprints</code>, <code>endpoint-stats</code>… This page listens with the SDK's{" "}
-                        <code>onDesktopEvent</code>, which is how these numbers move. Apps' backends push to their pages
-                        the same way, through <code>{"POST /desktop/frontend/<app>/<topic>"}</code>.
-                    </p>
-                    <button type="button" className="dim-btn sm" onClick={() => go("apps", "events")}>
-                        The events contract →
-                    </button>
-                </div>
-                <div className="dim-card teach">
-                    <h3>3 · Robot data flows sideways</h3>
-                    <p>
-                        The blueprint's modules publish on{" "}
-                        <b>zenoh</b>, not HTTP. Desktop joins zenoh as a peer and embeds{" "}
-                        <b>zenoh-gateway</b>, which hands topics to pages over WebRTC and answers{" "}
-                        <code>/api/topics</code>. Rates here are messages/s, not calls.
-                    </p>
-                    <button type="button" className="dim-btn sm" onClick={() => go("zenoh")}>
-                        Topics and how zenoh works →
-                    </button>
-                </div>
+            <div className="ee-grid">
+                <Card title="1 · Requests go up">
+                    <Markdown text="Every page is served by Desktop, on one origin. A page just calls a path; Desktop routes it by prefix and counts it under a *family*:" />
+                    <Table
+                        compact
+                        rowKey="family"
+                        rows={FAMILIES}
+                        columns={[
+                            { key: "prefix", label: "path", render: (row: Family) => <Text mono>{row.prefix}</Text> },
+                            { key: "family", label: "family" },
+                            { key: "what", label: "served by" },
+                        ]}
+                    />
+                </Card>
+                <Card title="2 · Changes come down">
+                    <Markdown
+                        text={DOC_1}
+                    />
+                    <Button size="sm" iconRight="arrow-right" onClick={() => go("apps", "events")}>
+                        The events contract
+                    </Button>
+                </Card>
+                <Card title="3 · Robot data flows sideways">
+                    <Markdown text="The blueprint's modules publish on **zenoh**, not HTTP. Desktop joins zenoh as a peer and embeds **zenoh-gateway**, which hands topics to pages over WebRTC and answers `/api/topics`. Rates here are messages/s, not calls." />
+                    <Button size="sm" iconRight="arrow-right" onClick={() => go("zenoh")}>
+                        Topics and how zenoh works
+                    </Button>
+                </Card>
             </div>
             <Activity go={go} />
-        </div>
+        </>
     )
 }
 
+type Family = { prefix: string; family: string; what: string }
+const FAMILIES: Family[] = [
+    { prefix: "/api/… /mcp", family: "desktop", what: "Desktop itself" },
+    { prefix: "/dimos/…", family: "dimos", what: "the dimos server (unix socket)" },
+    { prefix: "/agent/…", family: "agent", what: "the dimcode gateway" },
+    { prefix: "/apps/<name>/…", family: "app:<name>", what: "that app's backend" },
+]
+
+/** Desktop events as a log (newest first) */
+export function EventFeed({ events, empty }: { events: DesktopEvent[]; empty: string }) {
+    return (
+        <LogView
+            height={240}
+            follow={false}
+            lines={events.length
+                ? events.map((event) => ({
+                    ts: event.at,
+                    text: `${event.type}  ${describeEvent(event)}`,
+                    level: event.type === "endpoint-stats" ? "debug" : "info",
+                }))
+                : [{ text: empty, level: "debug" }]}
+        />
+    )
+}
+
+type BusyRow = { family: string; method: string; path: string; perSec: number; calls: number }
+
 function Activity({ go }: { go: (section: Section, focus?: string) => void }) {
     const { stats, events } = useLive()
-    const rows = Object.entries(stats?.families ?? {})
+    const rows: BusyRow[] = Object.entries(stats?.families ?? {})
         .flatMap(([family, list]) => list.map((row) => ({ family, ...row })))
         .sort((a, b) => b.perSec - a.perSec || b.calls - a.calls)
         .slice(0, 8)
     const section = (family: string): Section =>
         family === "desktop" ? "desktop" : family === "dimos" ? "dimos" : family === "agent" ? "agent" : "apps"
     return (
-        <div className="teach-grid two">
-            <div className="dim-card">
-                <h3 className="card-h">Busiest endpoints right now</h3>
-                <table className="dim-table compact">
-                    <thead>
-                        <tr>
-                            <th>family</th>
-                            <th>endpoint</th>
-                            <th className="num">calls/s</th>
-                            <th className="num">calls</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {rows.map((row) => (
-                            <tr
-                                key={`${row.family} ${row.method} ${row.path}`}
-                                className="clickable"
-                                onClick={() => go(section(row.family), row.family.replace(/^app:/, ""))}
-                            >
-                                <td>
-                                    <span className="fam">{row.family}</span>
-                                </td>
-                                <td className="dim-mono">{row.method} {row.path}</td>
-                                <td className="num">
-                                    <Live value={Math.round(row.perSec * 100) / 100} />
-                                </td>
-                                <td className="num">
-                                    <Live value={row.calls} format={(n) => n.toLocaleString()} />
-                                </td>
-                            </tr>
-                        ))}
-                        {!rows.length && (
-                            <tr>
-                                <td colSpan={4} className="dim-muted">No calls counted yet.</td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
-            <div className="dim-card">
-                <h3 className="card-h">Desktop events, as this page hears them</h3>
-                <ul className="event-feed">
-                    {events.slice(0, 9).map((event, i) => (
-                        <li key={`${event.at}-${i}`}>
-                            <span className="dim-mono dim-muted">
-                                {new Date(event.at).toLocaleTimeString([], { hour12: false })}
-                            </span>
-                            <span className={`ev ev-${event.type}`}>{event.type}</span>
-                            <span className="dim-muted ev-detail">{describeEvent(event)}</span>
-                        </li>
-                    ))}
-                    {!events.length && <li className="dim-muted">Waiting for Desktop's events (zenoh)…</li>}
-                </ul>
-            </div>
+        <div className="ee-grid ee-grid--wide">
+            <Card title="Busiest endpoints right now">
+                <Table
+                    compact
+                    rows={rows}
+                    rowKey={(row: BusyRow) => `${row.family} ${row.method} ${row.path}`}
+                    onRowClick={(row: BusyRow) => go(section(row.family), row.family.replace(/^app:/, ""))}
+                    empty="No calls counted yet."
+                    columns={[
+                        { key: "family", label: "family", render: (row: BusyRow) => <Badge>{row.family}</Badge> },
+                        {
+                            key: "path",
+                            label: "endpoint",
+                            render: (row: BusyRow) => <Text mono>{row.method} {row.path}</Text>,
+                        },
+                        {
+                            key: "perSec",
+                            label: "calls/s",
+                            align: "right",
+                            render: (row: BusyRow) => <LiveValue value={Math.round(row.perSec * 100) / 100} />,
+                        },
+                        {
+                            key: "calls",
+                            label: "calls",
+                            align: "right",
+                            render: (row: BusyRow) => (
+                                <LiveValue
+                                    value={row.calls}
+                                    format={(n: number) => n.toLocaleString()}
+                                />
+                            ),
+                        },
+                    ]}
+                />
+            </Card>
+            <Card title="Desktop events, as this page hears them">
+                <EventFeed events={events.slice(0, 40)} empty="Waiting for Desktop's events (zenoh)…" />
+            </Card>
         </div>
     )
 }
