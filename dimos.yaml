@@ -13,6 +13,7 @@ uses:
         - GET /api/topics/rates
         - GET /api/zenoh-gateway
     "@agentic-gateway": [GET /api/openapi]
+    "@zenoh-gateway": ">=0.5 <0.6" # Desktop events (endpoint-stats) on the page's zenoh-gateway connection
 caches:
     - url: "https://dimos-desktop.cachix.org"
       key: "dimos-desktop.cachix.org-1:A4P35aGJGmCan92LWyamtSFXMqaVE+VRFYnrJ8QMTeQ="
