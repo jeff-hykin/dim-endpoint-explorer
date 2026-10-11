@@ -352,12 +352,12 @@ function EventsContract() {
                             {
                                 key: "type",
                                 label: "type",
-                                render: (row: { type: string }) => <Text mono>{row.type}</Text>,
+                                render: (row) => <Text mono>{row.type}</Text>,
                             },
                             {
                                 key: "meaning",
                                 label: "when",
-                                render: (row: { meaning: string }) => <Markdown text={row.meaning} inline />,
+                                render: (row) => <Markdown text={row.meaning} inline />,
                             },
                         ]}
                     />

@@ -1,10 +1,16 @@
 // Small shared pieces built on dimos-react: method badges, doc panels, "Try it", parameter tables, and the arrowhead
 // the diagrams use.
 import { type ReactNode, useState } from "react"
-import { Alert, Badge, Button, CodeBlock, Panel, Row, Table, Text, TextInput } from "dimos-react"
+import { Alert, Badge, type BadgeTone, Button, CodeBlock, Panel, Row, Table, Text, TextInput } from "dimos-react"
 import { formatBytes } from "./desktop.ts"
 
-const METHOD_TONES: Record<string, string> = { GET: "info", POST: "ok", PUT: "warn", PATCH: "warn", DELETE: "danger" }
+const METHOD_TONES: Record<string, BadgeTone> = {
+    GET: "info",
+    POST: "ok",
+    PUT: "warn",
+    PATCH: "warn",
+    DELETE: "danger",
+}
 
 export function Method({ method }: { method: string }) {
     return <Badge tone={METHOD_TONES[method.toUpperCase()] ?? "default"} solid>{method}</Badge>
@@ -29,7 +35,7 @@ export function ParamTable({ rows, showIn = false }: {
                 {
                     key: "name",
                     label: "param",
-                    render: (p: { name: string; required?: boolean }) => (
+                    render: (p) => (
                         <Text mono>
                             {p.name}
                             {p.required ? <Text tone="danger">*</Text> : null}
@@ -37,7 +43,7 @@ export function ParamTable({ rows, showIn = false }: {
                     ),
                 },
                 ...(showIn ? [{ key: "in", label: "in" }] : []),
-                { key: "type", label: "type", render: (p: { type?: string }) => <Text mono>{p.type ?? ""}</Text> },
+                { key: "type", label: "type", render: (p) => <Text mono>{p.type ?? ""}</Text> },
                 { key: "description", label: "description" },
             ]}
         />

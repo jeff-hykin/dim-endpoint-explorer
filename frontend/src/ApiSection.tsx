@@ -177,21 +177,19 @@ export function ApiSection({ doc, error, family, docFamily, prefix = "", source,
                         <Table
                             compact
                             rows={untracked}
-                            rowKey={(row: { method: string; path: string }) => `${row.method} ${row.path}`}
+                            rowKey={(row) => `${row.method} ${row.path}`}
                             columns={[
                                 {
                                     key: "path",
                                     label: "request",
-                                    render: (row: { method: string; path: string }) => (
-                                        <Text mono>{row.method} {row.path}</Text>
-                                    ),
+                                    render: (row) => <Text mono>{row.method} {row.path}</Text>,
                                 },
                                 { key: "calls", label: "calls", align: "right" },
                                 {
                                     key: "errors",
                                     label: "errors",
                                     align: "right",
-                                    render: (row: { errors: number }) => (row.errors ? `${row.errors} err` : ""),
+                                    render: (row) => (row.errors ? `${row.errors} err` : ""),
                                 },
                             ]}
                         />

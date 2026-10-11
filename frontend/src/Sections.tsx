@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import {
     Alert,
     Badge,
+    type BadgeTone,
     Button,
     Card,
     CodeBlock,
@@ -68,7 +69,7 @@ export function DesktopSection() {
     )
 }
 
-const PHASE_TONES: Record<string, string> = { running: "ok", failed: "danger" }
+const PHASE_TONES: Record<string, BadgeTone> = { running: "ok", failed: "danger" }
 
 export function DimosSection() {
     const doc = useJson<OpenApi>("/api/desktop/openapi")

@@ -272,7 +272,9 @@ function SamplePanel({ topic, type }: { topic: string | null; type?: string }) {
                             ["key", sample.key],
                             ["type", sample.type],
                             ["size", `${formatBytes(sample.bytes)} on the wire`],
-                            ...fields.map(([k, v]) => [k, typeof v === "object" ? JSON.stringify(v) : String(v)]),
+                            ...fields.map(([k, v]) =>
+                                [k, typeof v === "object" ? JSON.stringify(v) : String(v)] as const
+                            ),
                         ]}
                     />
                     {sample.image && (
