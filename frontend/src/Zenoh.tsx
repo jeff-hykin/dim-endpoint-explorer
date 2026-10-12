@@ -51,7 +51,7 @@ type Status = {
 const KEY_EXAMPLE = "/odom  →  dimos/odom/nav_msgs.Odometry\n/cmd_vel  →  dimos/cmd_vel/geometry_msgs.Twist"
 
 const launcher = (
-    <Button variant="primary" onClick={() => openApp("launcher", { kind: "blueprint" })}>Open the Launcher</Button>
+    <Button variant="primary" onClick={() => openApp("launcher")}>Open the Launcher</Button>
 )
 
 export function ZenohSection() {

@@ -104,7 +104,7 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
                     title="Nothing is running, so only Desktop's own endpoints are here"
                     message="Launch a blueprint (or a replay, no robot needed) to see its modules' endpoints and topics light up too."
                     actions={
-                        <Button variant="primary" onClick={() => openApp("launcher", { kind: "blueprint" })}>
+                        <Button variant="primary" onClick={() => openApp("launcher")}>
                             Open the Launcher
                         </Button>
                     }
