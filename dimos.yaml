@@ -4,6 +4,7 @@ spec-version: v1.0 # the dimos.yaml spec version this file follows
 uses:
     "@dimos-gateway": [GET /runs, GET /blueprints]
     "@desktop-gateway":
+        - POST /mcp
         - GET /api/endpoints
         - GET /api/endpoints/stats
         - GET /api/desktop/openapi
