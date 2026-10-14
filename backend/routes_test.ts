@@ -54,10 +54,14 @@ Deno.test("api/endpoints: the families, then one family's endpoints with live co
             "builtins aren't an app",
         )
         const dimos = await call("GET", "api/endpoints?family=dimos")
-        const config = dimos.json.endpoints.find((e: { path: string }) => e.path === "/dimos/blueprints/{name}/config")
+        const config = dimos.json.endpoints.find((e: { path: string }) =>
+            e.path === "/dimos-gateway/blueprints/{name}/config"
+        )
         assertEquals([config.calls, config.tracked], [4, true])
         const agent = await call("GET", "api/endpoints?family=agent")
-        const session = agent.json.endpoints.find((e: { path: string }) => e.path === "/agent/api/sessions/{id}")
+        const session = agent.json.endpoints.find((e: { path: string }) =>
+            e.path === "/agent-gateway/api/sessions/{id}"
+        )
         assertEquals(session.calls, 5, "an unmatched raw path is counted under the template it fits")
         const rerun = await call("GET", "api/endpoints?family=app:dim-rerun&q=show")
         assertEquals(rerun.json.endpoints.map((e: { path: string; errors: number }) => [e.path, e.errors]), [[
@@ -85,9 +89,9 @@ Deno.test("no Desktop: a readable 502", async () => {
 })
 
 Deno.test("templates: {param} segments match, lengths must agree", () => {
-    assert(matchesTemplate("/dimos/blueprints/{name}/config", "/dimos/blueprints/go2/config"))
+    assert(matchesTemplate("/dimos-gateway/blueprints/{name}/config", "/dimos-gateway/blueprints/go2/config"))
     assert(matchesTemplate("api/recording/{name}", "/api/recording/a.rrd?x=1"))
-    assert(!matchesTemplate("/dimos/blueprints/{name}", "/dimos/blueprints/go2/config"))
+    assert(!matchesTemplate("/dimos-gateway/blueprints/{name}", "/dimos-gateway/blueprints/go2/config"))
     const stats = {
         families: {
             "app:x": [{ method: "GET", path: "api/a", calls: 2, errors: 1, lastCall: 5, meanMs: 4, perSec: 1 }],

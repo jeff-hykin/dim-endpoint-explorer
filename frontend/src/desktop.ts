@@ -108,7 +108,7 @@ export const mcpTools = () =>
 
 const trim = (path: string) => path.replace(/^\/+/, "")
 
-/** `/dimos/blueprints/{name}` matches `/dimos/blueprints/go2` */
+/** `/dimos-gateway/blueprints/{name}` matches `/dimos-gateway/blueprints/go2` */
 export function matchesTemplate(template: string, path: string): boolean {
     const want = trim(template).split("/")
     const got = trim(path.split("?")[0]).split("/")
@@ -124,10 +124,10 @@ export type Counts = {
     tracked: boolean
 }
 
-/** a path as the stats key it: no leading slash, and the gateway's own path for the agent family (it counts `/api/x`, not `/agent/api/x`) */
+/** a path as the stats key it: no leading slash, and the gateway's own path for the agent family (it counts `/api/x`, not `/agent-gateway/api/x`) */
 const norm = (family: string, path: string) => {
     const bare = trim(path.split("?")[0])
-    return family === "agent" ? bare.replace(/^agent(\/|$)/, "") : bare
+    return family === "agent" ? bare.replace(/^agent-gateway(\/|$)/, "") : bare
 }
 
 /** one endpoint's live counts: the stats rows for its template, plus unmatched raw paths that fit it */

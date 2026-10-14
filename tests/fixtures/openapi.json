@@ -408,7 +408,7 @@
                 "x-family": "desktop"
             }
         },
-        "/dimos/info": {
+        "/dimos-gateway/info": {
             "get": {
                 "operationId": "get__dimos_info",
                 "summary": "The dimos checkout: dir, version, installed",
@@ -425,7 +425,7 @@
                 "x-family": "dimos"
             }
         },
-        "/dimos/blueprints": {
+        "/dimos-gateway/blueprints": {
             "get": {
                 "operationId": "get__dimos_blueprints",
                 "summary": "Every blueprint dimos can run",
@@ -442,7 +442,7 @@
                 "x-family": "dimos"
             }
         },
-        "/dimos/blueprints/{name}": {
+        "/dimos-gateway/blueprints/{name}": {
             "get": {
                 "operationId": "get__dimos_blueprints_name_",
                 "summary": "A blueprint's modules and streams",
@@ -469,7 +469,7 @@
                 "x-family": "dimos"
             }
         },
-        "/dimos/blueprints/{name}/config": {
+        "/dimos-gateway/blueprints/{name}/config": {
             "get": {
                 "operationId": "get__dimos_blueprints_name_config",
                 "summary": "A blueprint's configurable args per module",
@@ -496,7 +496,7 @@
                 "x-family": "dimos"
             }
         },
-        "/dimos/global-config": {
+        "/dimos-gateway/global-config": {
             "get": {
                 "operationId": "get__dimos_global_config",
                 "summary": "GlobalConfig schema, defaults and overrides",
@@ -513,7 +513,7 @@
                 "x-family": "dimos"
             }
         },
-        "/dimos/runs": {
+        "/dimos-gateway/runs": {
             "get": {
                 "operationId": "get__dimos_runs",
                 "summary": "Running blueprints and Desktop's launch",
@@ -545,7 +545,7 @@
                 "x-family": "dimos"
             }
         },
-        "/dimos/runs/stop": {
+        "/dimos-gateway/runs/stop": {
             "post": {
                 "operationId": "post__dimos_runs_stop",
                 "summary": "Stop the launched blueprint",
@@ -562,7 +562,7 @@
                 "x-family": "dimos"
             }
         },
-        "/dimos/runs/{runId}/log": {
+        "/dimos-gateway/runs/{runId}/log": {
             "get": {
                 "operationId": "get__dimos_runs_runId_log",
                 "summary": "A run's log records",

@@ -83,25 +83,30 @@ const ops: Op[] = [
     ["get", "/api/desktop/openapi", "Endpoints", "This document"],
     ["get", "/api/desktop/dimos.yaml", "Endpoints", "Desktop's own manifest"],
     ["post", "/mcp", "MCP", "MCP JSON-RPC (tools/list, tools/call)"],
-    ["get", "/dimos/info", "Blueprints", "The dimos checkout: dir, version, installed"],
-    ["get", "/dimos/blueprints", "Blueprints", "Every blueprint dimos can run"],
-    ["get", "/dimos/blueprints/{name}", "Blueprints", "A blueprint's modules and streams", [[
+    ["get", "/dimos-gateway/info", "Blueprints", "The dimos checkout: dir, version, installed"],
+    ["get", "/dimos-gateway/blueprints", "Blueprints", "Every blueprint dimos can run"],
+    ["get", "/dimos-gateway/blueprints/{name}", "Blueprints", "A blueprint's modules and streams", [[
         "name",
         "string",
         true,
         "blueprint name",
     ]]],
-    ["get", "/dimos/blueprints/{name}/config", "Config", "A blueprint's configurable args per module", [[
+    ["get", "/dimos-gateway/blueprints/{name}/config", "Config", "A blueprint's configurable args per module", [[
         "name",
         "string",
         true,
         "blueprint name",
     ]]],
-    ["get", "/dimos/global-config", "Config", "GlobalConfig schema, defaults and overrides"],
-    ["get", "/dimos/runs", "Runs", "Running blueprints and Desktop's launch"],
-    ["post", "/dimos/runs", "Runs", "Launch a blueprint"],
-    ["post", "/dimos/runs/stop", "Runs", "Stop the launched blueprint"],
-    ["get", "/dimos/runs/{runId}/log", "Logs", "A run's log records", [["runId", "string", true, "run id or latest"]]],
+    ["get", "/dimos-gateway/global-config", "Config", "GlobalConfig schema, defaults and overrides"],
+    ["get", "/dimos-gateway/runs", "Runs", "Running blueprints and Desktop's launch"],
+    ["post", "/dimos-gateway/runs", "Runs", "Launch a blueprint"],
+    ["post", "/dimos-gateway/runs/stop", "Runs", "Stop the launched blueprint"],
+    ["get", "/dimos-gateway/runs/{runId}/log", "Logs", "A run's log records", [[
+        "runId",
+        "string",
+        true,
+        "run id or latest",
+    ]]],
 ]
 const familyOf = new Map(tags.map(([name, family]) => [name, family]))
 const paths: Record<string, Record<string, unknown>> = {}
@@ -135,7 +140,7 @@ await write("openapi.json", {
 await write("agent_openapi.json", {
     openapi: "3.1.0",
     info: { title: "dimcode gateway", version: "0.3.0" },
-    servers: [{ url: "/agent" }],
+    servers: [{ url: "/agent-gateway" }],
     tags: [
         { name: "Sessions", description: "Agent chat sessions: one per conversation, streamed to the portal." },
         { name: "Settings", description: "Model choice and API keys." },
@@ -248,7 +253,10 @@ await write("stats.json", {
             row("POST", "/mcp", 12, 0, 1),
             row("GET", "/api/nope", 3, 0, 3, false),
         ],
-        dimos: [row("GET", "/dimos/runs", 120, 0.2), row("GET", "/dimos/blueprints/{name}/config", 4, 0)],
+        dimos: [
+            row("GET", "/dimos-gateway/runs", 120, 0.2),
+            row("GET", "/dimos-gateway/blueprints/{name}/config", 4, 0),
+        ],
         agent: [row("GET", "/api/sessions", 30, 0.1), row("GET", "/api/sessions/abc", 5, 0, 0, false)],
         "app:dim-rerun": [
             row("GET", "api/state", 900, 2.5),

@@ -73,8 +73,10 @@ const PHASE_TONES: Record<string, BadgeTone> = { running: "ok", failed: "danger"
 
 export function DimosSection() {
     const doc = useJson<OpenApi>("/api/desktop/openapi")
-    const runs = useJson<Runs>("/dimos/runs", ["runs", "dimos"])
-    const blueprints = useJson<{ blueprints: { name: string; kind: string }[] }>("/dimos/blueprints", ["blueprints"])
+    const runs = useJson<Runs>("/dimos-gateway/runs", ["runs", "dimos"])
+    const blueprints = useJson<{ blueprints: { name: string; kind: string }[] }>("/dimos-gateway/blueprints", [
+        "blueprints",
+    ])
     const launch = runs.data?.launch
     const list = blueprints.data?.blueprints ?? []
     return (
@@ -87,7 +89,7 @@ export function DimosSection() {
             aside={
                 <>
                     <Card>
-                        <Markdown text="The dimos server is its own process on a unix socket, started on demand by Desktop, which proxies `/dimos/…` to it. It is the only part that depends on the dimos version: it reads the checkout's blueprints, launches runs and reads their logs." />
+                        <Markdown text="The dimos server is its own process on a unix socket, started on demand by Desktop, which proxies `/dimos-gateway/…` to it. It is the only part that depends on the dimos version: it reads the checkout's blueprints, launches runs and reads their logs." />
                     </Card>
                     <div className="ee-grid">
                         <Card>
@@ -147,7 +149,7 @@ function LaunchPhases({ phase }: { phase?: string }) {
 }
 
 export function AgentSection({ focus }: { focus?: string }) {
-    const doc = useJson<OpenApi>("/agent/api/openapi", ["agent"])
+    const doc = useJson<OpenApi>("/agent-gateway/api/openapi", ["agent"])
     const live = useLive()
     const [tools, setTools] = useState<McpTool[] | null>(null)
     const [toolsError, setToolsError] = useState<string | null>(null)
@@ -208,12 +210,12 @@ export function AgentSection({ focus }: { focus?: string }) {
             doc={doc.data}
             error={doc.error}
             family="agent"
-            prefix="/agent"
-            source="/agent/api/openapi"
+            prefix="/agent-gateway"
+            source="/agent-gateway/api/openapi"
             aside={
                 <>
                     <Card>
-                        <Markdown text="The agent gateway (dimcode) is a separate server; Desktop proxies `/agent/…` to it, so `/agent/api/settings` here is `/api/settings` there. It owns chat sessions, the model and keys, and the portal page; for anything on the robot it goes back through Desktop's MCP." />
+                        <Markdown text="The agent gateway (dimcode) is a separate server; Desktop proxies `/agent-gateway/…` to it, so `/agent-gateway/api/settings` here is `/api/settings` there. It owns chat sessions, the model and keys, and the portal page; for anything on the robot it goes back through Desktop's MCP." />
                     </Card>
                     {mcpPanel}
                 </>

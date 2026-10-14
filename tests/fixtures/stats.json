@@ -52,7 +52,7 @@
         "dimos": [
             {
                 "method": "GET",
-                "path": "/dimos/runs",
+                "path": "/dimos-gateway/runs",
                 "calls": 120,
                 "errors": 0,
                 "lastCall": 1791115198500,
@@ -62,7 +62,7 @@
             },
             {
                 "method": "GET",
-                "path": "/dimos/blueprints/{name}/config",
+                "path": "/dimos-gateway/blueprints/{name}/config",
                 "calls": 4,
                 "errors": 0,
                 "lastCall": 1791115198500,

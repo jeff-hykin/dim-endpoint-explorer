@@ -64,7 +64,7 @@ export type CountedEndpoint = FamilyEndpoint & Omit<EndpointStat, "method" | "pa
 const METHODS = ["get", "post", "put", "patch", "delete"]
 const trim = (path: string) => path.replace(/^\/+/, "")
 
-/** `/dimos/blueprints/{name}/config` matches `/dimos/blueprints/go2/config` (leading slashes ignored) */
+/** `/dimos-gateway/blueprints/{name}/config` matches `/dimos-gateway/blueprints/go2/config` (leading slashes ignored) */
 export function matchesTemplate(template: string, path: string): boolean {
     const want = trim(template).split("/")
     const got = trim(path.split("?")[0]).split("/")
@@ -112,7 +112,7 @@ export function familyEndpoints(
     const families: Record<string, FamilyEndpoint[]> = {
         desktop: openapiEndpoints(desktop, "desktop"),
         dimos: openapiEndpoints(desktop, "dimos"),
-        agent: openapiEndpoints(agent, undefined, "/agent"),
+        agent: openapiEndpoints(agent, undefined, "/agent-gateway"),
     }
     for (const app of registry?.apps ?? []) {
         if (app.source === "builtin") {
@@ -128,10 +128,10 @@ export function familyEndpoints(
     return families
 }
 
-/** a path as the stats key it: no leading slash, and the gateway's own path for the agent family (it counts `/api/x`, not `/agent/api/x`) */
+/** a path as the stats key it: no leading slash, and the gateway's own path for the agent family (it counts `/api/x`, not `/agent-gateway/api/x`) */
 const norm = (family: string, path: string) => {
     const bare = trim(path.split("?")[0])
-    return family === "agent" ? bare.replace(/^agent(\/|$)/, "") : bare
+    return family === "agent" ? bare.replace(/^agent-gateway(\/|$)/, "") : bare
 }
 
 /** a family's stats rows that belong to one endpoint: the exact template, else unmatched raw paths that fit it */

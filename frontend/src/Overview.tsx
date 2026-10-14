@@ -57,7 +57,7 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
     const live = useLive()
     const { stats, rates } = live
     const registry = useJson<{ apps: RegistryApp[] }>("/api/endpoints", ["endpoints", "apps"])
-    const runs = useJson<Runs>("/dimos/runs", ["runs", "dimos"])
+    const runs = useJson<Runs>("/dimos-gateway/runs", ["runs", "dimos"])
     const apps = (registry.data?.apps ?? []).filter((app) => app.source !== "builtin")
     const launch = runs.data?.launch ??
         (runs.data?.runs?.[0] ? { blueprint: runs.data.runs[0].blueprint, phase: "running" } : null)
@@ -92,7 +92,7 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
         mid: mid(from[0], from[1], to[0], to[1]),
     })
 
-    // nothing running: say what's still here and where to start one (live: Desktop's runs event re-reads /dimos/runs)
+    // nothing running: say what's still here and where to start one (live: Desktop's runs event re-reads /dimos-gateway/runs)
     const nothingRunning = runs.data && !runs.data.runs?.length &&
         !(launch && (launch.phase === "running" || launch.phase === "starting"))
     return (
@@ -228,7 +228,12 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
                         sub="launcher, settings, HUD"
                         onClick={() => go("desktop")}
                     />
-                    <Node box={portal} title="Agent portal" sub="chat page, /agent/" onClick={() => go("agent")} />
+                    <Node
+                        box={portal}
+                        title="Agent portal"
+                        sub="chat page, /agent-gateway/"
+                        onClick={() => go("agent")}
+                    />
                     <Node
                         box={pages}
                         title="App pages"
@@ -255,7 +260,7 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
                         box={dimosProxy}
                         kind="port"
                         title="dimos proxy"
-                        sub="/dimos/…"
+                        sub="/dimos-gateway/…"
                         metric={calls(dimosRate)}
                         onClick={() => go("dimos")}
                     />
@@ -263,7 +268,7 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
                         box={agentProxy}
                         kind="port"
                         title="agent proxy"
-                        sub="/agent/…"
+                        sub="/agent-gateway/…"
                         metric={calls(agentRate)}
                         onClick={() => go("agent")}
                     />
@@ -376,8 +381,8 @@ export function Overview({ go }: { go: (section: Section, focus?: string) => voi
 type Family = { prefix: string; family: string; what: string }
 const FAMILIES: Family[] = [
     { prefix: "/api/… /mcp", family: "desktop", what: "Desktop itself" },
-    { prefix: "/dimos/…", family: "dimos", what: "the dimos server (unix socket)" },
-    { prefix: "/agent/…", family: "agent", what: "the dimcode gateway" },
+    { prefix: "/dimos-gateway/…", family: "dimos", what: "the dimos server (unix socket)" },
+    { prefix: "/agent-gateway/…", family: "agent", what: "the dimcode gateway" },
     { prefix: "/apps/<name>/…", family: "app:<name>", what: "that app's backend" },
 ]
 

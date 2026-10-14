@@ -22,7 +22,7 @@ type Runs = { runs?: { blueprint: string }[]; launch?: { blueprint: string; phas
 async function sources() {
     const [desktop, agent, registry, stats] = await Promise.all([
         desktopJson<OpenApi>("/api/desktop/openapi", { optional: true }),
-        desktopJson<OpenApi>("/agent/api/openapi", { optional: true }),
+        desktopJson<OpenApi>("/agent-gateway/api/openapi", { optional: true }),
         desktopJson<Registry>("/api/endpoints"),
         desktopJson<Stats>("/api/endpoints/stats", { optional: true }),
     ])
@@ -45,7 +45,7 @@ export const routes: Route[] = [
             const [{ families, stats }, rates, runs] = await Promise.all([
                 sources(),
                 desktopJson<Rates>("/api/topics/rates", { optional: true }),
-                desktopJson<Runs>("/dimos/runs", { optional: true }),
+                desktopJson<Runs>("/dimos-gateway/runs", { optional: true }),
             ])
             const topics = [...(rates?.topics ?? [])].sort((a, b) => b.hz - a.hz)
             return {

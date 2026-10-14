@@ -98,47 +98,47 @@
                 },
                 {
                     "method": "GET",
-                    "path": "/dimos/info",
+                    "path": "/dimos-gateway/info",
                     "description": "The dimos checkout: dir, version, installed"
                 },
                 {
                     "method": "GET",
-                    "path": "/dimos/blueprints",
+                    "path": "/dimos-gateway/blueprints",
                     "description": "Every blueprint dimos can run"
                 },
                 {
                     "method": "GET",
-                    "path": "/dimos/blueprints/{name}",
+                    "path": "/dimos-gateway/blueprints/{name}",
                     "description": "A blueprint's modules and streams"
                 },
                 {
                     "method": "GET",
-                    "path": "/dimos/blueprints/{name}/config",
+                    "path": "/dimos-gateway/blueprints/{name}/config",
                     "description": "A blueprint's configurable args per module"
                 },
                 {
                     "method": "GET",
-                    "path": "/dimos/global-config",
+                    "path": "/dimos-gateway/global-config",
                     "description": "GlobalConfig schema, defaults and overrides"
                 },
                 {
                     "method": "GET",
-                    "path": "/dimos/runs",
+                    "path": "/dimos-gateway/runs",
                     "description": "Running blueprints and Desktop's launch"
                 },
                 {
                     "method": "POST",
-                    "path": "/dimos/runs",
+                    "path": "/dimos-gateway/runs",
                     "description": "Launch a blueprint"
                 },
                 {
                     "method": "POST",
-                    "path": "/dimos/runs/stop",
+                    "path": "/dimos-gateway/runs/stop",
                     "description": "Stop the launched blueprint"
                 },
                 {
                     "method": "GET",
-                    "path": "/dimos/runs/{runId}/log",
+                    "path": "/dimos-gateway/runs/{runId}/log",
                     "description": "A run's log records"
                 }
             ]

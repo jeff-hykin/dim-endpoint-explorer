@@ -6,7 +6,7 @@
     },
     "servers": [
         {
-            "url": "/agent"
+            "url": "/agent-gateway"
         }
     ],
     "tags": [

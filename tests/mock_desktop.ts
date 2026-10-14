@@ -115,7 +115,7 @@ export function mockDesktop(
         }
         const fixed: Record<string, () => unknown> = {
             "/api/desktop/openapi": () => fixture("openapi.json"),
-            "/agent/api/openapi": () => fixture("agent_openapi.json"),
+            "/agent-gateway/api/openapi": () => fixture("agent_openapi.json"),
             "/api/endpoints": () => {
                 const app = url.searchParams.get("app")
                 return app ? { apps: registry.apps.filter((a: { app: string }) => a.app === app) } : registry
@@ -123,8 +123,8 @@ export function mockDesktop(
             "/api/endpoints/stats": () => ({ ...stats, now: Date.now() }),
             "/api/topics": () => fixture("topics.json"),
             "/api/topics/rates": () => rates,
-            "/dimos/runs": () => fixture("runs.json"),
-            "/dimos/blueprints": () => fixture("blueprints.json"),
+            "/dimos-gateway/runs": () => fixture("runs.json"),
+            "/dimos-gateway/blueprints": () => fixture("blueprints.json"),
             "/api/apps": () => fixture("apps.json"),
             "/api/hud": () => ({ zenoh: "peer" }),
             "/api/zenoh-gateway": () => ({
@@ -134,7 +134,7 @@ export function mockDesktop(
                 version: "0.5.0-28c17f0",
                 encoder: "VideoToolbox",
             }),
-            "/dimos/info": () => ({ dir: "/repos/dimos", found: true, installed: true, version: "0.0.9" }),
+            "/dimos-gateway/info": () => ({ dir: "/repos/dimos", found: true, installed: true, version: "0.0.9" }),
         }
         if (path === "/api/desktop/dimos.yaml") {
             return new Response(Deno.readTextFileSync(new URL("fixtures/dimos.yaml", import.meta.url)), {
@@ -183,15 +183,15 @@ export function mockDesktop(
             const app = path.match(/^\/apps\/([^/]+)\/(.*)$/)
             const family = app
                 ? `app:${app[1]}`
-                : path.startsWith("/dimos")
+                : path.startsWith("/dimos-gateway")
                 ? "dimos"
-                : path.startsWith("/agent")
+                : path.startsWith("/agent-gateway")
                 ? "agent"
                 : "desktop"
             const counted = app
                 ? (app[2].startsWith("api/") ? app[2] : "(frontend)")
                 : family === "agent"
-                ? path.slice(6) || "/"
+                ? path.slice(14) || "/"
                 : path
             count(family, app && !app[2].startsWith("api/") ? "GET" : request.method, counted, response.status)
         }
