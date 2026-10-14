@@ -1,14 +1,9 @@
-// dimos-app-server: this app's API and its built frontend on the unix socket Desktop gives, else a port. What Desktop
-// passes: the DIMOS_APP env var, one JSON object and the whole interface (docs/apps.md; dimos_app.ts).
-import { dimosApp } from "./dimos_app.ts"
-import { handle } from "./http.ts"
-import { DESCRIPTION, routes } from "./routes.ts"
-
-function flag(name: string): string | undefined {
+// dimos-app-server: serves the built page on the unix socket Desktop gives (DIMOS_APP's `socket`), else --port. The page
+// reads Desktop directly (same origin); this server has no API of its own.
+const flag = (name: string) => {
     const index = Deno.args.indexOf(`--${name}`)
     return index === -1 ? undefined : Deno.args[index + 1]
 }
-
 const frontend = flag("frontend") ?? new URL("../frontend/dist", import.meta.url).pathname
 const types: Record<string, string> = {
     html: "text/html; charset=utf-8",
@@ -16,30 +11,24 @@ const types: Record<string, string> = {
     css: "text/css",
     svg: "image/svg+xml",
     png: "image/png",
-    json: "application/json",
-    wasm: "application/wasm",
-}
-
-async function file(path: string): Promise<Response> {
-    const clean = path.split("/").filter((part) => part && part !== "..").join("/") || "index.html"
-    for (const candidate of [clean, "index.html"]) {
-        try {
-            const bytes = await Deno.readFile(`${frontend}/${candidate}`)
-            const type = types[candidate.split(".").pop() ?? ""] ?? "application/octet-stream"
-            return new Response(bytes, { headers: { "content-type": type } })
-        } catch {
-            // next candidate: unknown paths get the app (hash routing)
-        }
-    }
-    return new Response("not found", { status: 404 })
+    woff2: "font/woff2",
 }
 
 async function serve(request: Request): Promise<Response> {
-    const path = new URL(request.url).pathname
-    return (await handle(request, routes, DESCRIPTION)) ?? file(path)
+    const path = new URL(request.url).pathname.split("/").filter((part) => part && part !== "..").join("/")
+    // a path without an extension is the page; a missing file (e.g. agent.json) is a 404
+    const file = path.includes(".") ? path : "index.html"
+    try {
+        const bytes = await Deno.readFile(`${frontend}/${file}`)
+        return new Response(bytes, {
+            headers: { "content-type": types[file.split(".").pop()!] ?? "application/octet-stream" },
+        })
+    } catch {
+        return new Response("not found", { status: 404 })
+    }
 }
 
-const socket = dimosApp.socket
+const socket: string | undefined = JSON.parse(Deno.env.get("DIMOS_APP") ?? "{}").socket
 if (socket) {
     try {
         Deno.removeSync(socket)

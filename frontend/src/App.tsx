@@ -1,118 +1,232 @@
-// Endpoint Explorer: every endpoint family of the running dimOS system, live, and how data flows between them.
-// Sections are hash routes (#overview, #zenoh, #desktop, #dimos, #agent, #apps[/<focus>]) so Desktop's agent or a link
-// can open one directly.
-import { useEffect, useRef, useState } from "react"
-import { Alert, AppShell, ConnectionStatus, Heading, Row, Tabs, Text, TopBar } from "dimos-react"
-import { AppsSection } from "./Apps.tsx"
-import { familyRate, formatRate } from "./desktop.ts"
-import { startLive, useLive } from "./live.ts"
-import { Overview } from "./Overview.tsx"
-import { AgentSection, DesktopSection, DimosSection } from "./Sections.tsx"
-import { ZenohSection } from "./Zenoh.tsx"
+// Endpoint Explorer: every component's dimos.yaml (Desktop, the dimos gateway, each app): what it provides, what it uses,
+// and who uses each endpoint. #<component id> opens one directly.
+import { useEffect, useMemo, useState } from "react"
+import {
+    Alert,
+    AppShell,
+    Badge,
+    type BadgeTone,
+    Button,
+    Heading,
+    List,
+    ListRow,
+    Panel,
+    Row,
+    SearchInput,
+    Table,
+    Text,
+    TopBar,
+} from "dimos-react"
+import { parse } from "yaml"
+import {
+    type AppInput,
+    buildComponents,
+    type Component,
+    type DesktopYaml,
+    type Endpoint,
+    ownerOf,
+    usedBy,
+} from "./model.ts"
 
-export type Section = "overview" | "zenoh" | "desktop" | "dimos" | "agent" | "apps"
-const SECTIONS: { id: Section; label: string; hint: string }[] = [
-    { id: "overview", label: "Overview", hint: "the whole system as a live data-flow map" },
-    { id: "zenoh", label: "zenoh-gateway", hint: "robot topics: rates, payloads, how zenoh works" },
-    { id: "desktop", label: "Desktop", hint: "Desktop's own HTTP API" },
-    { id: "dimos", label: "dimos server", hint: "blueprints, runs, logs, config" },
-    { id: "agent", label: "Agent gateway", hint: "dimcode's API and the MCP tools" },
-    { id: "apps", label: "Apps", hint: "every installed app's endpoints" },
-]
-
-function readHash(): { section: Section; focus?: string } {
-    const [section, ...rest] = decodeURIComponent(location.hash.replace(/^#\/?/, "")).split("/")
-    const known = SECTIONS.some((s) => s.id === section)
-    return { section: known ? section as Section : "overview", focus: rest.join("/") || undefined }
+async function get(path: string): Promise<string> {
+    const response = await fetch(path, { signal: AbortSignal.timeout(10_000) })
+    const text = await response.text()
+    if (!response.ok) {
+        throw new Error(`${path}: ${response.status} ${text.slice(0, 200)}`)
+    }
+    return text
 }
 
-// inside Desktop, its window bar already shows the app's icon and name
+/** every dimos.yaml Desktop serves: its own, and each app's (as /api/apps/{pkg}/dimos-yaml-check + /api/endpoints) */
+async function load(): Promise<{ components: Component[]; errors: string[] }> {
+    const errors: string[] = []
+    const soft = <T,>(promise: Promise<T>): Promise<T | null> =>
+        promise.catch((error) => {
+            errors.push(String(error instanceof Error ? error.message : error))
+            return null
+        })
+    const [desktop, appList, registry] = await Promise.all([
+        soft(get("/api/desktop/dimos.yaml").then((text) => parse(text) as DesktopYaml)),
+        soft(
+            get("/api/apps").then((text) =>
+                JSON.parse(text).apps as { pkg: string; title?: string; builtin?: boolean }[]
+            ),
+        ),
+        soft(get("/api/endpoints").then((text) => JSON.parse(text).apps as ({ app: string } & AppInput["registry"])[])),
+    ])
+    const apps = await Promise.all(
+        (appList ?? []).filter((app) => !app.builtin).map(async (app): Promise<AppInput | null> => {
+            const check = await soft(get(`/api/apps/${encodeURIComponent(app.pkg)}/dimos-yaml-check`))
+            return check === null ? null : {
+                pkg: app.pkg,
+                title: app.title,
+                declared: JSON.parse(check).declared,
+                registry: registry?.find((entry) => entry.app === app.pkg),
+            }
+        }),
+    )
+    return { components: buildComponents(desktop, apps.filter((app) => app !== null)), errors }
+}
+
+const METHOD_TONES: Record<string, BadgeTone> = {
+    GET: "info",
+    POST: "ok",
+    PUT: "warn",
+    PATCH: "warn",
+    DELETE: "danger",
+}
+const Method = ({ method }: { method: string }) => (
+    <Badge tone={METHOD_TONES[method] ?? "default"} solid>{method}</Badge>
+)
+const readHash = () => decodeURIComponent(location.hash.replace(/^#\/?/, ""))
 const standalone = globalThis.top === globalThis.self
 
 export function App() {
-    const [route, setRoute] = useState(readHash)
-    const live = useLive()
-    const content = useRef<HTMLDivElement>(null)
+    const [data, setData] = useState<{ components: Component[]; errors: string[] } | null>(null)
+    const [loading, setLoading] = useState(false)
+    const [selected, setSelected] = useState(readHash)
+    const [query, setQuery] = useState("")
+    const [open, setOpen] = useState<string | null>(null)
+    const reload = () => {
+        setLoading(true)
+        load().then(setData).finally(() => setLoading(false))
+    }
     useEffect(() => {
-        startLive()
-        const onHash = () => setRoute(readHash())
+        reload()
+        const onHash = () => setSelected(readHash())
         addEventListener("hashchange", onHash)
         return () => removeEventListener("hashchange", onHash)
     }, [])
-    const go = (section: Section, focus?: string) => {
-        location.hash = focus ? `${section}/${encodeURIComponent(focus)}` : section
-        content.current?.closest(".dr-shell-content")?.scrollTo({ top: 0 })
+    const components = data?.components ?? []
+    const users = useMemo(() => usedBy(components), [data])
+    const q = query.trim().toLowerCase()
+    const matches = (e: { method: string; path: string; description?: string }) =>
+        !q || `${e.method} ${e.path} ${e.description ?? ""}`.toLowerCase().includes(q)
+    const shown = components.filter((c) =>
+        !q || `${c.id} ${c.title}`.toLowerCase().includes(q) || c.provides.some(matches) || c.uses.some(matches)
+    )
+    const current = components.find((c) => c.id === selected) ?? shown[0] ?? null
+    const title = (id: string | null) => components.find((c) => c.id === id)?.title ?? id ?? "?"
+    const go = (id: string) => (location.hash = id)
+    const link = (id: string) => (
+        <Badge key={id} className="ee-link" onClick={() => go(id)} title={`open ${id}`}>{title(id)}</Badge>
+    )
+
+    const provided = (e: Endpoint) => {
+        const key = `${e.method} ${e.path}`
+        const who = users.get(key) ?? []
+        return (
+            <div key={key}>
+                <ListRow
+                    icon={<Method method={e.method} />}
+                    title={<Text mono>{e.path}</Text>}
+                    subtitle={e.description}
+                    selected={open === key}
+                    onClick={() => setOpen(open === key ? null : key)}
+                    meta={
+                        <Row gap={6}>
+                            {e.role && <Badge tone="info">{e.role}</Badge>}
+                            {who.length > 0 && <Text small muted>used by {who.length}</Text>}
+                        </Row>
+                    }
+                />
+                {open === key && (
+                    <div className="ee-endpoint-doc">
+                        {e.params && (
+                            <Table
+                                compact
+                                rowKey="name"
+                                rows={Object.entries(e.params).map(([name, p]) => ({ name, ...p }))}
+                                columns={[
+                                    {
+                                        key: "name",
+                                        label: "param",
+                                        render: (p) => <Text mono>{p.name}{p.required ? "*" : ""}</Text>,
+                                    },
+                                    { key: "type", label: "type", render: (p) => <Text mono>{p.type ?? ""}</Text> },
+                                    { key: "description", label: "description" },
+                                ]}
+                            />
+                        )}
+                        <Row gap={6} wrap>
+                            <Text small muted>{who.length ? "used by" : "no dimos.yaml uses it"}</Text>
+                            {who.map(link)}
+                        </Row>
+                    </div>
+                )}
+            </div>
+        )
     }
-    const rate = (section: Section): string | null => {
-        const s = live.stats
-        switch (section) {
-            case "zenoh":
-                return live.rates ? `${live.rates.topics.length}` : null
-            case "desktop":
-                return formatRate(familyRate(s, "desktop"))
-            case "dimos":
-                return formatRate(familyRate(s, "dimos"))
-            case "agent":
-                return formatRate(familyRate(s, "agent"))
-            case "apps":
-                return formatRate(
-                    Object.keys(s?.families ?? {}).filter((f) => f.startsWith("app:")).reduce(
-                        (sum, f) => sum + familyRate(s, f),
-                        0,
-                    ),
-                )
-            default:
-                return null
-        }
-    }
-    const connected = live.stats !== null && !live.statsError
-    const current = SECTIONS.find((s) => s.id === route.section)
+
     return (
         <AppShell
             topBar={
                 <TopBar
                     title={standalone ? "Endpoint Explorer" : undefined}
                     icon={standalone ? "activity" : undefined}
-                    left={
-                        <Tabs
-                            label="Sections"
-                            value={route.section}
-                            onChange={(section: Section) => go(section)}
-                            items={SECTIONS.map((s) => ({
-                                value: s.id,
-                                label: s.label,
-                                title: s.hint,
-                                badge: rate(s.id),
-                            }))}
-                        />
-                    }
-                    right={
-                        <ConnectionStatus
-                            state={connected ? "connected" : live.statsError ? "lost" : "connecting"}
-                            label={connected ? "live" : live.statsError ? "no stats" : "connecting"}
-                            title={live.statsError ?? "reading /api/endpoints/stats + endpoint-stats events (zenoh)"}
-                        />
-                    }
+                    right={<Button size="sm" icon="refresh" loading={loading} onClick={reload}>Reload</Button>}
                 />
             }
         >
-            <div className="ee-content" ref={content}>
-                {live.statsError && (
-                    <Alert tone="warn" title="Desktop's call counts aren't available">
-                        <Text mono>/api/endpoints/stats</Text>:{" "}
-                        {live.statsError}. Docs and lists still work; counts stay at 0.
-                    </Alert>
-                )}
-                <Row gap={12} align="baseline" wrap>
-                    <Heading level={1}>{current?.label}</Heading>
-                    <Text muted>{current?.hint}</Text>
-                </Row>
-                {route.section === "overview" && <Overview go={go} />}
-                {route.section === "zenoh" && <ZenohSection />}
-                {route.section === "desktop" && <DesktopSection />}
-                {route.section === "dimos" && <DimosSection />}
-                {route.section === "agent" && <AgentSection focus={route.focus} />}
-                {route.section === "apps" && <AppsSection focus={route.focus} />}
+            <div className="ee-content">
+                {data?.errors.map((error) => <Alert key={error} tone="warn">{error}</Alert>)}
+                <div className="ee-split">
+                    <nav className="ee-split__nav">
+                        <SearchInput placeholder="Search endpoints" value={query} onChange={setQuery} />
+                        <List>
+                            {shown.map((c) => (
+                                <ListRow
+                                    key={c.id}
+                                    title={c.title}
+                                    subtitle={`${c.provides.length} provided · ${c.uses.length} used`}
+                                    selected={c.id === current?.id}
+                                    onClick={() => go(c.id)}
+                                />
+                            ))}
+                        </List>
+                    </nav>
+                    {current && (
+                        <div className="ee-split__main">
+                            <Heading level={1}>{current.title}</Heading>
+                            {current.description && <Text as="p">{current.description}</Text>}
+                            <Row gap={6} wrap>
+                                <Text small muted>
+                                    dimos.yaml: <Text mono>{current.source}</Text>
+                                </Text>
+                                {Object.entries(current.requires).map(([name, range]) => (
+                                    <Badge key={name}>requires {name} {range}</Badge>
+                                ))}
+                                {current.zenohGateway && <Badge>uses zenoh-gateway</Badge>}
+                                {current.connects.map((url) => <Badge key={url}>connects {url}</Badge>)}
+                            </Row>
+                            <Panel title={`Provides (${current.provides.length})`}>
+                                {current.provides.length
+                                    ? <List>{current.provides.filter(matches).map(provided)}</List>
+                                    : <Text muted>Its dimos.yaml provides no endpoints.</Text>}
+                            </Panel>
+                            <Panel title={`Uses (${current.uses.length})`}>
+                                {current.uses.length
+                                    ? (
+                                        <List>
+                                            {current.uses.filter(matches).map((use) => (
+                                                <ListRow
+                                                    key={`${use.method} ${use.path}`}
+                                                    icon={<Method method={use.method} />}
+                                                    title={<Text mono>{use.path}</Text>}
+                                                    subtitle={use.endpoint?.description ??
+                                                        (use.provider
+                                                            ? `not in ${title(use.provider)}'s dimos.yaml`
+                                                            : `${ownerOf(use.path)} has no dimos.yaml`)}
+                                                    meta={use.provider ? link(use.provider) : null}
+                                                />
+                                            ))}
+                                        </List>
+                                    )
+                                    : <Text muted>Its dimos.yaml uses no endpoints.</Text>}
+                            </Panel>
+                        </div>
+                    )}
+                </div>
             </div>
         </AppShell>
     )

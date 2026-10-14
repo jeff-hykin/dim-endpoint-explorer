@@ -1,59 +1,20 @@
 title: Endpoint Explorer
 spec-version: v1.0 # the dimos.yaml spec version this file follows
-# what it reads to draw the map: each gateway's description of itself, the endpoint registry and call counts, topics
+# every dimos.yaml Desktop serves: its own, and each app's (declared endpoints, uses) with the registry's descriptions
 uses:
-    "@dimos-gateway": [GET /runs, GET /blueprints]
     "@desktop-gateway":
-        - POST /mcp
-        - GET /api/endpoints
-        - GET /api/endpoints/stats
-        - GET /api/desktop/openapi
         - GET /api/desktop/dimos.yaml
-        - GET /api/topics
-        - GET /api/topics/sample
-        - GET /api/topics/rates
-        - GET /api/zenoh-gateway
-    "@agentic-gateway": [GET /api/openapi]
-    "@zenoh-gateway": ">=0.5 <0.6" # Desktop events (endpoint-stats) on the page's zenoh-gateway connection
+        - GET /api/apps
+        - GET /api/apps/{pkg}/dimos-yaml-check
+        - GET /api/endpoints
 caches:
     - url: "https://dimos-desktop.cachix.org"
       key: "dimos-desktop.cachix.org-1:A4P35aGJGmCan92LWyamtSFXMqaVE+VRFYnrJ8QMTeQ="
 provides:
     description: >-
-        Endpoint Explorer: maps every endpoint family of the running dimOS system (Desktop, the dimos server, the agent
-        gateway, each app, zenoh-gateway topics) with live call counts and topic rates
-    endpoints:
-        - method: GET
-          path: api/summary
-          description: >-
-              A compact picture of the running system: each endpoint family (desktop, dimos, agent, app:<name>) with its
-              endpoint count, calls, errors and calls/s; the busiest endpoints; the zenoh topic count and busiest topics; the
-              running blueprint and its phase
-          role: context
-        - method: GET
-          path: api/endpoints
-          description: >-
-              Endpoints with their live call counts (calls, errors, calls/s, last call, mean ms). family = desktop, dimos,
-              agent or app:<name>; without it, the list of families and their endpoint counts
-          params:
-              family:
-                  type: string
-                  description: "desktop, dimos, agent, or app:<name> (e.g. app:dim-rerun)"
-              q:
-                  type: string
-                  description: "only endpoints whose method, path or description contains this"
-        - method: GET
-          path: api/stats
-          description: >-
-              Desktop's call counts (GET /api/endpoints/stats) trimmed for reading: totals, then each family's busiest
-              endpoints by calls (top per family, default 10), including requests that matched no known endpoint
-          params:
-              family:
-                  type: string
-                  description: "only this family (desktop, dimos, agent, app:<name>)"
-              top:
-                  type: number
-                  description: endpoints per family (default 10)
+        Endpoint Explorer: each component's dimos.yaml (Desktop, the dimos gateway, every app): the endpoints it
+        provides, the ones it uses, and who uses each
+    endpoints: []
 # prebuilt cross builds Desktop downloads (if a cache above has them) before building dimosApp, per machine type
 nix:
     cache:

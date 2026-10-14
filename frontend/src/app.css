@@ -1,30 +1,11 @@
-/* Endpoint Explorer: page grids and the data-flow diagrams (SVG), on Desktop's theme tokens only. Every control, card,
-   table, badge and text style comes from dimos-react. */
+/* Endpoint Explorer: the page grid, on Desktop's theme tokens. Every control, card and text style comes from dimos-react. */
 .ee-content {
     padding: 18px clamp(12px, 3vw, 28px) calc(28px + var(--dim-inset-bottom, 0px));
     max-width: 1500px;
     width: 100%;
     margin: 0 auto;
     box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
 }
-.ee-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
-    gap: 12px;
-}
-.ee-grid--wide {
-    grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
-}
-.ee-grid--stats {
-    grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
-}
-.ee-grid > * {
-    min-width: 0;
-}
-/* a nav column + its content (an OpenAPI document, the apps) */
 .ee-split {
     display: grid;
     grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
@@ -52,219 +33,15 @@
     flex-direction: column;
     gap: 10px;
 }
-.ee-endpoint-fresh {
-    animation: ee-fresh 6s ease-out;
-}
-@keyframes ee-fresh {
-    from {
-        background: var(--sel);
-    }
-}
-.ee-sample-img {
-    max-width: 100%;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-}
-.ee-app-icon {
-    width: 22px;
-    height: 22px;
-    object-fit: contain;
-}
-
-/* ── diagrams (SVG) ── */
-.ee-flowmap,
-.ee-diagram {
-    width: 100%;
-    height: auto;
-    display: block;
-    font-family: var(--sans);
-}
-.ee-diagram {
-    margin: 4px 0 8px;
-}
-.col-label {
-    font-family: var(--mono);
-    font-size: 10.5px;
-    letter-spacing: 0.12em;
-    fill: var(--muted-fg);
-}
-.group {
-    fill: color-mix(in srgb, var(--primary) 3%, transparent);
-    stroke: var(--border);
-    stroke-dasharray: 4 4;
+.ee-link {
     cursor: pointer;
 }
-.node rect,
-.dnode rect {
-    fill: var(--card);
-    stroke: var(--border);
-    stroke-width: 1.2;
-    transition: stroke 0.15s, fill 0.15s;
-}
-.node.port rect,
-.dnode rect {
-    fill: var(--surface);
-}
-.node.clickable {
-    cursor: pointer;
-}
-.node.clickable:hover rect {
-    stroke: var(--primary);
-    fill: var(--sel);
-}
-.node.zenoh rect,
-.dnode.zenoh rect {
-    stroke: color-mix(in srgb, var(--accent-alt) 55%, transparent);
-}
-.node.app rect {
-    stroke: color-mix(in srgb, var(--primary) 35%, transparent);
-}
-.node-title {
-    font-size: 13px;
-    font-weight: 600;
-    fill: var(--fg);
-}
-.node-sub {
-    font-family: var(--mono);
-    font-size: 10.5px;
-    fill: var(--muted-fg);
-}
-.node-sub.clickable {
-    cursor: pointer;
-}
-.node-metric {
-    font-family: var(--mono);
-    font-size: 10.5px;
-    fill: var(--primary);
-}
-.status.ok {
-    fill: var(--ok);
-}
-.status.warn {
-    fill: var(--warn);
-}
-.status.off {
-    fill: var(--muted-fg);
-}
-.edge-base {
-    fill: none;
-    stroke: var(--border);
-    stroke-width: 1.6;
-}
-.edge-base.dashed {
-    stroke-dasharray: 3 5;
-}
-.edge-flow {
-    fill: none;
-    stroke: var(--primary);
-    stroke-linecap: round;
-    stroke-dasharray: 1 13;
-    opacity: 0;
-    transition: opacity 0.4s;
-}
-.edge.active .edge-flow {
-    opacity: 1;
-}
-.edge-msg .edge-flow {
-    stroke: var(--accent-alt);
-    stroke-dasharray: 2 9;
-}
-.edge-event .edge-flow {
-    stroke: var(--ok);
-}
-.edge-static .edge-flow {
-    stroke: var(--muted-fg);
-    stroke-dasharray: 2 8;
-}
-.edge-label rect {
-    fill: var(--card);
-    stroke: var(--hair);
-}
-.edge-label text {
-    font-family: var(--mono);
-    font-size: 10.5px;
-    fill: var(--muted-fg);
-}
-.edge.active .edge-label text {
-    fill: var(--fg);
-}
-.bus {
-    stroke: var(--accent-alt);
-    stroke-width: 5;
-    stroke-linecap: round;
-    opacity: 0.55;
-}
-.bus-label {
-    font-family: var(--mono);
-    font-size: 11px;
-    fill: var(--accent-alt);
-    cursor: pointer;
-}
-.legend-swatch {
-    display: inline-block;
-    width: 18px;
-    height: 0;
-    border-top: 3px dotted var(--primary);
-    vertical-align: middle;
-    margin-right: 6px;
-}
-.legend-swatch.event {
-    border-color: var(--ok);
-}
-.legend-swatch.msg {
-    border-color: var(--accent-alt);
-}
-.lifeline {
-    stroke: var(--border);
-    stroke-dasharray: 3 4;
-}
-.dline {
-    fill: none;
-    stroke: var(--primary);
-    stroke-width: 1.8;
-    stroke-dasharray: 1 8;
-    stroke-linecap: round;
-    animation: march 1.2s linear infinite;
-}
-.dline.msg {
-    stroke: var(--accent-alt);
-}
-.dline.event {
-    stroke: var(--ok);
-}
-@keyframes march {
-    to {
-        stroke-dashoffset: -18;
-    }
-}
-.seq text {
-    font-family: var(--mono);
-    font-size: 10.5px;
-    fill: var(--muted-fg);
-}
-.arrowhead {
-    fill: var(--muted-fg);
-}
-.cloud-frame {
-    fill: var(--surface);
-    stroke: var(--border);
-}
-.cloud-point {
-    fill: var(--accent-alt);
-}
-.cloud-centroid {
-    fill: var(--primary);
-}
-
-@media (max-width: 900px) {
+@media (max-width: 720px) {
     .ee-split {
-        grid-template-columns: minmax(0, 1fr); /* not 1fr: a long endpoint row would widen the page past the phone */
+        grid-template-columns: minmax(0, 1fr);
     }
     .ee-split__nav {
         position: static;
         max-height: none;
-    }
-    .ee-endpoint-doc {
-        padding-left: 4px;
     }
 }

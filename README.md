@@ -1,50 +1,31 @@
 # dim-endpoint-explorer
 
-A [dimOS Desktop](https://github.com/jeff-hykin/dimos-desktop) app that maps **every endpoint family of the running
-system**, live, and teaches how data flows between them: Desktop's own API, the dimos server, the agent gateway
-(dimcode), every app's endpoints, and zenoh-gateway's robot topics.
+A [dimOS Desktop](https://github.com/jeff-hykin/dimos-desktop) app that shows every component's **dimos.yaml**: Desktop,
+the dimos gateway, and each installed app. For each: its description, the endpoints it `provides` (method, path,
+description, params, role), the endpoints it `uses` and whose they are, and who uses each of its endpoints.
 
 ```sh
 dimos-desktop install https://github.com/jeff-hykin/dim-endpoint-explorer
 ```
 
-## Sections
+It reads only dimos.yaml, as Desktop serves it (same origin):
 
-| section       | reads                                                                                        | shows                                                                    |
-| ------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Overview      | `/api/endpoints/stats`, `/api/topics/rates`, Desktop's events (zenoh), `/dimos-gateway/runs` | an animated data-flow map, each link carrying live calls/s or messages/s |
-| zenoh-gateway | `/api/topics`, `/api/topics/rates`, `/api/topics/sample`                                     | topics with Hz, bandwidth, sparklines, a sampled payload; zenoh docs     |
-| Desktop       | `/api/desktop/openapi`, `/api/desktop/dimos.yaml`                                            | Desktop's API by group, per-endpoint docs and counts, Try it for GETs    |
-| dimos server  | `/api/desktop/openapi` (dimos family), `/dimos-gateway/runs`, `/dimos-gateway/blueprints`    | the same, plus the running blueprint, its phase and the blueprint count  |
-| Agent gateway | `/agent-gateway/api/openapi`, `POST /mcp` `tools/list`                                       | the gateway's API and the MCP tools the agent calls                      |
-| Apps          | `/api/endpoints` (re-read on `endpoints` / `apps` events)                                    | every app's endpoints, counts, errors, last call; the events contract    |
+| source                                 | what                                                                   |
+| -------------------------------------- | ---------------------------------------------------------------------- |
+| `GET /api/desktop/dimos.yaml`          | Desktop's dimos.yaml; its `/dimos-gateway/*` endpoints are the gateway |
+| `GET /api/apps`                        | the installed apps                                                     |
+| `GET /api/apps/{pkg}/dimos-yaml-check` | each app's declared `provides` and `uses`                              |
+| `GET /api/endpoints`                   | descriptions and params of each app's provided endpoints               |
 
-The page reads Desktop directly (same origin). Counts update from Desktop's `{type:"endpoint-stats"}` events and a
-re-read every 4 s; topic rates are polled every second.
-
-## Endpoints (for Desktop's agent)
-
-| endpoint            | what                                                                                      |
-| ------------------- | ----------------------------------------------------------------------------------------- |
-| `GET api/summary`   | families with endpoint counts, calls, errors, calls/s; busiest endpoints; topics; the run |
-| `GET api/endpoints` | `family=desktop\|dimos\|agent\|app:<name>` (+ `q`): endpoints with live counts            |
-| `GET api/stats`     | Desktop's call counts, top endpoints per family (`family`, `top`)                         |
-
-They are built from Desktop's APIs at `DIMOS_APP`'s `desktopUrl`.
+A component without a dimos.yaml (the agent gateway) isn't shown. The backend only serves the page.
 
 ## Development
 
-The page is React built from [dimos-react](https://github.com/jeff-hykin/dimos-react) (theme, every control, card, table
-and panel); `frontend/package.json` pins it to a release tag. The app keeps only its data code and the data-flow SVGs.
-
 ```sh
-deno task test && deno task check     # backend tests (against a stand-in Desktop), dimos.yaml ↔ routes check
+deno task test                          # the parsing and cross-reference (frontend/src/model_test.ts)
 cd frontend && npm install && npm run typecheck && npm run build
-deno task mock                        # a stand-in Desktop on :7399 with live-looking traffic (tests/fixtures);
-                                      # the built page at http://127.0.0.1:7399/apps/dim-endpoint-explorer/
-cd frontend && npm run dev            # vite, proxying Desktop's paths to DESKTOP (default the mock)
-deno run -A scripts/shots.ts <page url> <dir>   # screenshots of every section, both themes
-nix build .#dimosApp                  # what Desktop builds: bin/dimos-app-server
+cd frontend && npm run dev              # vite, proxying /api to DESKTOP (default http://127.0.0.1:5555)
+nix build .#dimosApp                    # what Desktop builds: bin/dimos-app-server
 ```
 
 Licensed under Apache-2.0.
