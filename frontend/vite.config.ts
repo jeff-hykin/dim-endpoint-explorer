@@ -1,12 +1,31 @@
-import react from "@vitejs/plugin-react"
+import { readFileSync } from "node:fs"
 import process from "node:process"
+import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
+import { esmFetch } from "./tools/esm_fetch.ts"
 
-// base "./": every URL relative, so the app works under Desktop's /apps/<name>/ (docs/apps.md); `npm run dev` proxies
+// base "./": every URL relative, so the app works under Desktop's /apps/<name>/ (docs/apps.md); `deno task dev` proxies
 // Desktop's /api to DESKTOP (default the local Desktop on :5555)
 const desktop = process.env.DESKTOP ?? "http://127.0.0.1:5555"
+const imports: Record<string, string> = JSON.parse(readFileSync(new URL("./deno.json", import.meta.url), "utf8"))
+    .imports
+// deno (tests, deno check) reads dimos-react's TypeScript source at its tag; the page bundles esm.sh's build of that
+// same tag, with react and react-dom left to this page's own
+const dimosReact = Object.fromEntries(
+    Object.entries(imports)
+        .filter(([name]) => name.startsWith("dimos-react"))
+        .map(([name, url]) => [
+            name,
+            url.replace(
+                /^https:\/\/raw\.githubusercontent\.com\/jeff-hykin\/dimos-react\/([^/]+)\//,
+                "https://esm.sh/gh/jeff-hykin/dimos-react@$1/",
+            ) +
+            "?external=react,react-dom,three",
+        ]),
+)
 export default defineConfig({
     base: "./",
-    plugins: [react()],
+    // dimos-react comes from esm.sh (deno.json's URL), fetched and bundled at build (tools/esm_fetch.ts)
+    plugins: [esmFetch(dimosReact), react()],
     server: { proxy: { "/api": desktop } },
 })

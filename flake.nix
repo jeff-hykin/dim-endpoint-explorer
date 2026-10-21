@@ -1,11 +1,15 @@
 {
     description = "Endpoint Explorer (dim-endpoint-explorer), a dimOS Desktop app: `nix build .#dimosApp` → bin/dimos-app-server (Deno backend + built React frontend)";
-    inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    inputs = {
+        nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+        # the page's deno: nixos-25.11's 2.6.10, the version dimos pins (newer deno refuses packages younger than a day)
+        nixpkgs-deno.url = "github:NixOS/nixpkgs/nixos-25.11";
+    };
     nixConfig = {
         extra-substituters = [ "https://dimos-desktop.cachix.org" ];
         extra-trusted-public-keys = [ "dimos-desktop.cachix.org-1:A4P35aGJGmCan92LWyamtSFXMqaVE+VRFYnrJ8QMTeQ=" ];
     };
-    outputs = { self, nixpkgs }:
+    outputs = { self, nixpkgs, nixpkgs-deno }:
         let
             systems = [ "aarch64-darwin" "x86_64-darwin" "x86_64-linux" "aarch64-linux" ];
             forAll = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
@@ -19,16 +23,70 @@
                     text = "#!${linux.runtimeShell}\n${line linux}\n";
                 };
         in {
-            packages = forAll (pkgs: rec {
-                frontend = pkgs.buildNpmPackage {
-                    pname = "endpoint-explorer-frontend";
-                    version = "0.1.0";
-                    src = ./frontend;
-                    # `nix build .#frontend` prints the right hash when package-lock.json changes
-                    npmDepsHash = "sha256-TqUfjlGxIidcLgPGeY+1U3eYIP4nhLHR9wNBbFZRsTM=";
-                    # npm writes the git dependency (dimos-react) into its cache while installing
-                    makeCacheWritable = true;
-                    installPhase = "cp -r dist $out";
+            packages = forAll (pkgs: let
+                deno = nixpkgs-deno.legacyPackages.${pkgs.stdenv.hostPlatform.system}.deno;
+                denoEnv = "export HOME=$TMPDIR DENO_DIR=$TMPDIR/deno DENO_NO_UPDATE_CHECK=1 DENO_NO_PROMPT=1";
+                frontendFiles = paths: pkgs.lib.fileset.toSource { root = ./frontend; fileset = pkgs.lib.fileset.unions paths; };
+                pageFiles = frontendFiles [ ./frontend/deno.json ./frontend/deno.lock ./frontend/index.html ./frontend/vite.config.ts ./frontend/tools ./frontend/src ];
+            in rec {
+                # `deno install --frozen` (deno.lock pins every package) with network, so fixed-output. Its hash is per
+                # build machine (vite's native rollup and esbuild differ by OS and CPU): `deno task update-hashes` refreshes
+                # this machine's after frontend/deno.json or deno.lock change.
+                frontendModules = pkgs.stdenvNoCC.mkDerivation {
+                    name = "endpoint-explorer-frontend-modules";
+                    src = frontendFiles [ ./frontend/deno.json ./frontend/deno.lock ];
+                    nativeBuildInputs = [ deno ];
+                    buildPhase = ''
+                        ${denoEnv}
+                        export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+                        deno install --frozen
+                        # deno's own record of the install: not needed, and not byte-identical between installs
+                        rm -f node_modules/.deno/.setup-cache.bin
+                    '';
+                    installPhase = "cp -R node_modules $out";
+                    dontFixup = true;
+                    outputHashMode = "recursive";
+                    outputHashAlgo = "sha256";
+                    outputHash = {
+                        aarch64-darwin = "sha256-AcehSl6e08PrUJaeq5iB9d4ioJu9rQPMa4t56g/E9MI=";
+                        x86_64-darwin = "";
+                        x86_64-linux = "sha256-MA1E7CXVLkPVKf3j2AGRgDf1o/tN/1WR1N+VaS5Nipg=";
+                        aarch64-linux = "";
+                    }.${pkgs.stdenv.hostPlatform.system};
+                };
+
+                # dimos-react as esm.sh builds its tag (frontend/tools/esm_fetch.ts): a vite build with network that
+                # keeps only what it fetched, so fixed-output; the same on every system. `deno task update-hashes` refreshes it.
+                frontendEsm = pkgs.stdenvNoCC.mkDerivation {
+                    name = "endpoint-explorer-frontend-esm";
+                    src = pageFiles;
+                    nativeBuildInputs = [ deno ];
+                    buildPhase = ''
+                        ${denoEnv}
+                        export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+                        cp -R ${frontendModules} node_modules
+                        chmod -R u+w node_modules
+                        ESM_CACHE=$TMPDIR/esm deno run -A --cached-only --node-modules-dir=manual npm:vite build --logLevel warn
+                    '';
+                    installPhase = "cp -R $TMPDIR/esm $out";
+                    dontFixup = true;
+                    outputHashMode = "recursive";
+                    outputHashAlgo = "sha256";
+                    outputHash = "sha256-B1cyWQ8tnsl2nl0mkw0mbu2Pb+YGTCcnEZt5LJkecp4=";
+                };
+
+                # the page: React + Vite against those modules and that esm.sh cache, offline
+                frontend = pkgs.stdenvNoCC.mkDerivation {
+                    name = "endpoint-explorer-frontend";
+                    src = pageFiles;
+                    nativeBuildInputs = [ deno ];
+                    buildPhase = ''
+                        ${denoEnv}
+                        cp -R ${frontendModules} node_modules
+                        chmod -R u+w node_modules
+                        ESM_CACHE=${frontendEsm} ESM_OFFLINE=1 deno run -A --cached-only --node-modules-dir=manual npm:vite build
+                    '';
+                    installPhase = "cp -R dist $out";
                 };
                 dimosApp = pkgs.writeShellScriptBin "dimos-app-server" ''
                     exec ${pkgs.deno}/bin/deno run -A --no-lock ${./backend}/main.ts --frontend ${frontend} "$@"

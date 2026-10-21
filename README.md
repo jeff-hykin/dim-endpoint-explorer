@@ -23,9 +23,10 @@ A component without a dimos.yaml (the agent gateway) isn't shown. The backend on
 
 ```sh
 deno task test                          # the parsing and cross-reference (frontend/src/model_test.ts)
-cd frontend && npm install && npm run typecheck && npm run build
-cd frontend && npm run dev              # vite, proxying /api to DESKTOP (default http://127.0.0.1:5555)
+cd frontend && deno task build         # deno check, then vite (deno 2.6.10, nixos-25.11's; frontend/deno.json holds every dependency)
+cd frontend && deno task dev            # vite, proxying /api to DESKTOP (default http://127.0.0.1:5555)
 nix build .#dimosApp                    # what Desktop builds: bin/dimos-app-server
+deno task update-hashes                 # after frontend/deno.json, deno.lock or the dimos-react tag change: flake.nix's hashes
 ```
 
 Licensed under Apache-2.0.

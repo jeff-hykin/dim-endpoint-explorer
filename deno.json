@@ -1,8 +1,9 @@
 {
     "tasks": {
         "dev": "deno run -A --watch backend/main.ts --port 8787",
-        "test": "deno test frontend/src/",
-        "check": "deno check backend/main.ts"
+        "test": "cd frontend && deno task test",
+        "check": "deno check backend/main.ts",
+        "update-hashes": "deno run -A scripts/update_hashes.ts"
     },
     "fmt": {
         "indentWidth": 4,
