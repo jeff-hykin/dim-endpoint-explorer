@@ -9,7 +9,7 @@ const desktop = {
         endpoints: [
             { app: "desktop", method: "GET", path: "/api/apps", description: "apps", params: {} },
             { app: "desktop", method: "GET", path: "/recordings/{id}", description: "one recording" },
-            { app: "desktop", method: "GET", path: "/dimos-gateway/runs", description: "runs" },
+            { app: "desktop", method: "GET", path: "/dimos-gateway/active", description: "what runs" },
         ],
     },
 }
@@ -17,7 +17,7 @@ const apps = [
     {
         pkg: "dim-rerun",
         title: "Rerun",
-        declared: { public: ["POST api/open"], requires: ["GET /dimos-gateway/runs", "GET /api/apps"] },
+        declared: { public: ["POST api/open"], requires: ["GET /dimos-gateway/active", "GET /api/apps"] },
         registry: {
             description: "a viewer",
             endpoints: [{ method: "POST", path: "api/open", description: "open one" }],
@@ -43,7 +43,7 @@ Deno.test("paths match across {params}, and belong to a component by prefix", ()
     assert(samePath("/a/b", "a/b/"))
     assert(!samePath("/recordings/{id}", "/recordings/abc/file"))
     assertEquals(ownerOf("/apps/dim-rerun/api/open"), "dim-rerun")
-    assertEquals(ownerOf("/dimos-gateway/runs"), "dimos-gateway")
+    assertEquals(ownerOf("/dimos-gateway/active"), "dimos-gateway")
     assertEquals(ownerOf("/api/apps"), "desktop")
 })
 
@@ -52,7 +52,7 @@ Deno.test("Desktop's dimos.yaml splits into Desktop and the dimos gateway; apps 
     assertEquals(components.map((c) => c.id), ["desktop", "dimos-gateway", "dim-rerun", "dim-recordings"])
     assertEquals(components[0].provides.map((e) => e.path), ["/api/apps", "/recordings/{id}"])
     assertEquals(components[0].requires, { dimos: ">=0.0.14b1 <0.1" })
-    assertEquals(components[1].provides.map((e) => e.path), ["/dimos-gateway/runs"])
+    assertEquals(components[1].provides.map((e) => e.path), ["/dimos-gateway/active"])
     assertEquals(components[2].provides, [{
         method: "POST",
         path: "/apps/dim-rerun/api/open",
@@ -70,7 +70,7 @@ Deno.test("uses resolve to their provider's endpoint; unknown ones stay null", (
         ["desktop", null],
     ])
     const users = usedBy(components)
-    assertEquals(users.get("GET /dimos-gateway/runs"), ["dim-rerun"])
+    assertEquals(users.get("GET /dimos-gateway/active"), ["dim-rerun"])
     assertEquals(users.get("GET /api/apps"), ["dim-rerun"])
     assertEquals(users.get("POST /apps/dim-rerun/api/open"), ["dim-recordings"])
 })

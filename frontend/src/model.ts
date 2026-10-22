@@ -4,7 +4,7 @@
 export type Param = { type?: string; description?: string; required?: boolean }
 export type Endpoint = {
     method: string
-    /** the full path from Desktop's origin, e.g. /dimos-gateway/runs or /apps/dim-rerun/api/open */
+    /** the full path from Desktop's origin, e.g. /dimos-gateway/active or /apps/dim-rerun/api/open */
     path: string
     description?: string
     params?: Record<string, Param>
