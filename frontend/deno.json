@@ -17,7 +17,7 @@
         "@vitejs/plugin-react": "npm:@vitejs/plugin-react@^5.0.0",
         "vite": "npm:vite@^7.1.0",
         "@std/assert": "jsr:@std/assert@1",
-        "dimos-react": "https://raw.githubusercontent.com/jeff-hykin/dimos-react/v0.2.0-beta16/src/index.ts"
+        "dimos-react": "https://raw.githubusercontent.com/jeff-hykin/dimos-react/v0.3.7/src/index.ts"
     },
     "compilerOptions": {
         "jsx": "react-jsx",
